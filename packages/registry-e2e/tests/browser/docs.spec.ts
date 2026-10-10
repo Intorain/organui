@@ -94,3 +94,42 @@ test("accessibility scan covers expanded, mixed and filtered states", async ({
     expect(result.violations).toEqual([])
   }
 })
+
+test("homepage explorer links support keyboard navigation without overflow", async ({
+  page,
+}, info) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  await page.goto("/")
+  const navigation = page.getByRole("navigation", {
+    name: "3D anatomy explorers",
+  })
+  await expect(navigation.getByRole("link")).toHaveCount(5)
+  const names = ["Brain", "Heart", "Kidneys", "Liver", "Lungs"]
+  for (const [index, name] of names.entries()) {
+    const link = navigation.getByRole("link", { name, exact: true })
+    await expect(link).toBeVisible()
+    await expect(link).toHaveAttribute(
+      "href",
+      `https://github.com/organui/${name.toLowerCase()}-3d`
+    )
+    if (index === 0) await link.focus()
+    else await page.keyboard.press("Tab")
+    await expect(link).toBeFocused()
+    expect(
+      await link.evaluate((element) =>
+        parseFloat(getComputedStyle(element).outlineWidth)
+      )
+    ).toBeGreaterThan(0)
+  }
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth
+    )
+  ).toBe(true)
+  await page.screenshot({
+    path: info.outputPath("homepage.png"),
+    fullPage: true,
+  })
+  expect(errors).toEqual([])
+})
