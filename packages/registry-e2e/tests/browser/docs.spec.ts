@@ -2,6 +2,8 @@ import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
 import { readFile } from "node:fs/promises"
 import { registrySchema, registryItemSchema } from "shadcn/schema"
+import { heartModel } from "@workspace/registry/organ-viewer/heart"
+import { fixtureGlb } from "../../scripts/fixture-glb.js"
 
 test("documentation interaction, styling and registry serving", async ({
   page,
@@ -71,7 +73,18 @@ test("documentation interaction, styling and registry serving", async ({
     registrySchema
       .parse(await catalogResponse.json())
       .items.map((item) => item.name)
-  ).toEqual(["anatomy-tree"])
+  ).toEqual(
+    registrySchema
+      .parse(
+        JSON.parse(
+          await readFile(
+            new URL(import.meta.resolve("@workspace/registry/registry.json")),
+            "utf8"
+          )
+        )
+      )
+      .items.map((item) => item.name)
+  )
   expect(errors).toEqual([])
 })
 
@@ -181,16 +194,18 @@ test("registry index lists every catalog item inside the docs layout", async ({
   for (const item of catalog.items) {
     const title = item.title ?? item.name
     await expect(
-      page.getByRole("heading", { name: title, level: 3 }).getByRole("link")
+      page
+        .getByRole("heading", { name: title, level: 3, exact: true })
+        .getByRole("link")
     ).toHaveAttribute("href", `/docs/${item.name}`)
     await expect(
-      page.getByRole("region", { name: `Install ${title}` })
+      page.getByRole("region", { name: `Install ${title}`, exact: true })
     ).toHaveText(
       `bunx shadcn@4.21.0 add https://organui.com/r/${item.name}.json`
     )
     await expect(
       page
-        .getByRole("region", { name: `${title} preview` })
+        .getByRole("region", { name: `${title} preview`, exact: true })
         .locator(":scope > *")
     ).toBeVisible()
     expect((await request.get(`/docs/${item.name}`)).ok()).toBe(true)
@@ -231,4 +246,80 @@ test("registry index lists every catalog item inside the docs layout", async ({
     docs.getByRole("link", { name: "Anatomy tree" })
   ).toHaveAttribute("aria-current", "page")
   expect(errors).toEqual([])
+})
+
+test("organ pages pair the viewer with the anatomy tree", async ({
+  page,
+  request,
+}, info) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text())
+  })
+  // Serve a stand-in for the commit-pinned model instead of the CDN.
+  await page.route(heartModel.src, (route) =>
+    route.fulfill({
+      body: Buffer.from(fixtureGlb(heartModel.structures.map(({ id }) => id))),
+      contentType: "model/gltf-binary",
+    })
+  )
+  await page.goto("/docs/heart")
+  await expect(
+    page.getByRole("heading", { name: "Heart", level: 1 })
+  ).toBeVisible()
+  const viewer = page.getByRole("region", { name: "Interactive heart model" })
+  await expect(viewer.getByRole("toolbar")).toBeVisible()
+  // The panel starts closed; opening it moves focus to its search field.
+  await expect(page.getByRole("tree")).toHaveCount(0)
+  const anatomy = page.getByRole("button", { name: "Anatomy", exact: true })
+  await anatomy.click()
+  await expect(page.getByRole("searchbox")).toBeFocused()
+  await page.getByRole("button", { name: "Left atrium", exact: true }).click()
+  await expect(page.getByRole("status").last()).toContainText("Left atrium:")
+  await viewer.click()
+  await expect(
+    page.getByRole("treeitem", { name: "Right atrium", exact: true })
+  ).toHaveAttribute("aria-selected", "true")
+  await page.getByRole("searchbox").focus()
+  await page.keyboard.press("Escape")
+  await expect(page.getByRole("tree")).toHaveCount(0)
+  await expect(anatomy).toBeFocused()
+  await expect(
+    page.getByRole("region", { name: "Installation command" })
+  ).toHaveText("bunx shadcn@4.21.0 add https://organui.com/r/heart.json")
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth
+    )
+  ).toBe(true)
+  const axe = await new AxeBuilder({ page }).analyze()
+  expect(axe.violations).toEqual([])
+  await page.screenshot({ path: info.outputPath("organ.png"), fullPage: true })
+  const item = registryItemSchema.parse(
+    await (await request.get("/r/heart.json")).json()
+  )
+  expect(item.files?.map((file) => file.path)).toEqual([
+    "registry/base-nova/organ-viewer/organ-viewer.tsx",
+    "registry/base-nova/organ-viewer/heart.tsx",
+  ])
+  expect(errors).toEqual([])
+})
+
+test("a model that fails to load explains itself and retries", async ({
+  page,
+}) => {
+  let requests = 0
+  await page.route(heartModel.src, (route) => {
+    requests++
+    return route.fulfill({ status: 404 })
+  })
+  await page.goto("/docs/heart")
+  const alert = page
+    .getByRole("region", { name: "Interactive heart model" })
+    .getByRole("alert")
+  await expect(alert).toContainText("The heart model couldn’t load")
+  await expect(alert).toContainText("HTTP 404")
+  await alert.getByRole("button", { name: "Try again" }).click()
+  await expect.poll(() => requests).toBe(2)
 })
