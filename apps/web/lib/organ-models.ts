@@ -1,12 +1,5 @@
 import type { OrganModel } from "@workspace/registry/organ-viewer/organ-viewer"
 
-// Models this site hosts load from its own origin, so local and preview
-// builds use the copy in public/models instead of organui.com.
-const hosted = (model: OrganModel): OrganModel => ({
-  ...model,
-  src: model.src.replace(/^https:\/\/organui\.com\/models\//, "/models/"),
-})
-
 // One loader per organ registry item, so pages and previews only download the
 // structure data of the organ they show. An organ item missing here has no
 // docs page, which the browser suite catches.
@@ -34,12 +27,10 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     import("@workspace/registry/organ-viewer/brain").then(
       (module) => module.brainModel
     ),
-  // Served by this site, so docs and previews load it from the same origin.
   breast: () =>
-    import("@workspace/registry/organ-viewer/breast").then((module) => ({
-      ...module.breastModel,
-      src: "/models/breast.glb",
-    })),
+    import("@workspace/registry/organ-viewer/breast").then((module) =>
+      local(module.breastModel)
+    ),
   diaphragm: () =>
     import("@workspace/registry/organ-viewer/diaphragm").then((module) =>
       local(module.diaphragmModel)
@@ -60,6 +51,10 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     import("@workspace/registry/organ-viewer/gallbladder").then(
       (module) => module.gallbladderModel
     ),
+  hair: () =>
+    import("@workspace/registry/organ-viewer/hair").then((module) =>
+      local(module.hairModel)
+    ),
   heart: () =>
     import("@workspace/registry/organ-viewer/heart").then(
       (module) => module.heartModel
@@ -68,13 +63,10 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     import("@workspace/registry/organ-viewer/intestines").then(
       (module) => module.intestinesModel
     ),
-  // Served by this site rather than an explorer repository, so docs load it
-  // same-origin.
   joints: () =>
-    import("@workspace/registry/organ-viewer/joints").then((module) => ({
-      ...module.jointsModel,
-      src: "/models/joints.glb",
-    })),
+    import("@workspace/registry/organ-viewer/joints").then((module) =>
+      local(module.jointsModel)
+    ),
   kidneys: () =>
     import("@workspace/registry/organ-viewer/kidneys").then(
       (module) => module.kidneysModel
@@ -99,13 +91,14 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     import("@workspace/registry/organ-viewer/muscles").then(
       (module) => module.musclesModel
     ),
-  // Models built in this repository are served by the website itself, so
-  // previews and local builds load them from the same origin.
+  nails: () =>
+    import("@workspace/registry/organ-viewer/nails").then((module) =>
+      local(module.nailsModel)
+    ),
   nerves: () =>
-    import("@workspace/registry/organ-viewer/nerves").then((module) => ({
-      ...module.nervesModel,
-      src: "/models/nerves.glb",
-    })),
+    import("@workspace/registry/organ-viewer/nerves").then((module) =>
+      local(module.nervesModel)
+    ),
   nose: () =>
     import("@workspace/registry/organ-viewer/nose").then(
       (module) => module.noseModel
@@ -114,23 +107,21 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     import("@workspace/registry/organ-viewer/pancreas").then(
       (module) => module.pancreasModel
     ),
-  // Hosted by this site; the published item points at organui.com.
   parathyroid: () =>
-    import("@workspace/registry/organ-viewer/parathyroid").then((module) => ({
-      ...module.parathyroidModel,
-      src: "/models/parathyroid.glb",
-    })),
+    import("@workspace/registry/organ-viewer/parathyroid").then((module) =>
+      local(module.parathyroidModel)
+    ),
   pharynx: () =>
     import("@workspace/registry/organ-viewer/pharynx").then(
       (module) => module.pharynxModel
     ),
   pineal: () =>
     import("@workspace/registry/organ-viewer/pineal").then((module) =>
-      hosted(module.pinealModel)
+      local(module.pinealModel)
     ),
   pituitary: () =>
     import("@workspace/registry/organ-viewer/pituitary").then((module) =>
-      hosted(module.pituitaryModel)
+      local(module.pituitaryModel)
     ),
   prostate: () =>
     import("@workspace/registry/organ-viewer/prostate").then(
@@ -184,10 +175,8 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     import("@workspace/registry/organ-viewer/vessels").then(
       (module) => module.vesselsModel
     ),
-  // Hosted by this site; the published item points at organui.com.
   vestibular: () =>
-    import("@workspace/registry/organ-viewer/vestibular").then((module) => ({
-      ...module.vestibularModel,
-      src: "/models/vestibular.glb",
-    })),
+    import("@workspace/registry/organ-viewer/vestibular").then((module) =>
+      local(module.vestibularModel)
+    ),
 }
