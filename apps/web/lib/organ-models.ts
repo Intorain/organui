@@ -15,6 +15,10 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     import("@workspace/registry/organ-viewer/adrenals").then(
       (module) => module.adrenalsModel
     ),
+  appendix: () =>
+    import("@workspace/registry/organ-viewer/appendix").then((module) =>
+      local(module.appendixModel)
+    ),
   bladder: () =>
     import("@workspace/registry/organ-viewer/bladder").then(
       (module) => module.bladderModel
