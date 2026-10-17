@@ -33,6 +33,10 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
       ...module.breastModel,
       src: "/models/breast.glb",
     })),
+  diaphragm: () =>
+    import("@workspace/registry/organ-viewer/diaphragm").then((module) =>
+      local(module.diaphragmModel)
+    ),
   ear: () =>
     import("@workspace/registry/organ-viewer/ear").then(
       (module) => module.earModel
