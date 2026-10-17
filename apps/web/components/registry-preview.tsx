@@ -1,8 +1,12 @@
 "use client"
 
 import { useState, type ComponentType } from "react"
-import { anatomyExampleData as data } from "@/lib/examples"
+import {
+  anatomyExampleData as data,
+  labResultsExampleData,
+} from "@/lib/examples"
 import { AnatomyTree } from "@workspace/registry/anatomy-tree"
+import { LabResultsTable } from "@workspace/registry/lab-results"
 import { OrganPreview } from "@/components/organ-preview"
 import { Example as DnaHelixExample } from "@/app/docs/dna-helix/example"
 import { Example as MoleculeExample } from "@/app/docs/molecule-viewer/example"
@@ -27,6 +31,15 @@ function OrganViewerPreview() {
   return <OrganPreview name="heart" organ="Heart" />
 }
 
+function LabResultsPreview() {
+  return (
+    <LabResultsTable
+      results={labResultsExampleData.slice(0, 4)}
+      caption="Illustrative values, not patient data"
+    />
+  )
+}
+
 function MoleculeViewerPreview() {
   return <MoleculeExample compact />
 }
@@ -40,6 +53,7 @@ function DnaHelixPreview() {
 const previews: Record<string, ComponentType> = {
   "anatomy-tree": AnatomyTreePreview,
   "organ-viewer": OrganViewerPreview,
+  "lab-results": LabResultsPreview,
   "molecule-viewer": MoleculeViewerPreview,
   "dna-helix": DnaHelixPreview,
 }
