@@ -47,8 +47,9 @@ Each one installs the shared `organ-viewer.tsx` (three.js) plus the organ's
 structures, views and model credit. The GLB itself stays in the explorer
 repository under its own licence (CC BY-SA 2.1 JP, CC BY-SA 4.0, CC BY 4.0 or
 CC0, per organ) and loads from a commit-pinned jsDelivr URL; organs without an
-explorer repository are built under `models/` and served from
-`organui.com/models/`. The viewer shows its credit. See [the organ viewer documentation](https://organui.com/docs/organ-viewer).
+explorer repository, such as `nerves` and `parathyroid`, are built in this
+repository and served from `organui.com/models/`, with an attribution file for
+each model. The viewer shows its credit. See [the organ viewer documentation](https://organui.com/docs/organ-viewer).
 
 ## Repository
 
