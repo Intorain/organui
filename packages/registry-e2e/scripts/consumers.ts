@@ -1,8 +1,9 @@
 import { mkdir, writeFile, readFile, rm } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
-import { heartModel } from "@workspace/registry/organ-viewer/heart"
+import { heartModel } from "@workspace/registry/heart"
 import { fixtureGlb } from "./fixture-glb.js"
+import catalog from "@workspace/registry/registry.json"
 import { githubConsumer } from "./github-consumer.js"
 const out = resolve(import.meta.dirname, "../.consumers")
 const shadcn = resolve(
@@ -27,14 +28,57 @@ const server = Bun.serve({
       )
   },
 })
-async function run(command: string[], cwd: string) {
-  const process = Bun.spawn(command, {
+async function run(command: string[], cwd: string, declineOverwrites = false) {
+  const child = Bun.spawn(command, {
     cwd,
-    stdout: "inherit",
-    stderr: "inherit",
+    stdin: "pipe",
+    stdout: "pipe",
+    stderr: "pipe",
+    timeout: 180_000,
   })
-  if (await process.exited) throw new Error(`${command.join(" ")} failed`)
+  let pending = ""
+  let inputClosed = false
+  const closeInput = () => {
+    if (!inputClosed) child.stdin.end()
+    inputClosed = true
+  }
+  if (!declineOverwrites) closeInput()
+  async function forward(
+    stream: ReadableStream<Uint8Array>,
+    output: NodeJS.WriteStream
+  ) {
+    const decoder = new TextDecoder()
+    const reader = stream.getReader()
+    while (true) {
+      const { done, value: chunk } = await reader.read()
+      if (done) break
+      output.write(chunk)
+      if (declineOverwrites) {
+        pending += decoder.decode(chunk, { stream: true })
+        if (
+          !inputClosed &&
+          pending.includes("Would you like to overwrite?") &&
+          pending.includes("(y/N)")
+        ) {
+          child.stdin.write("n\n")
+          child.stdin.flush()
+          pending = ""
+        }
+        // prompts leaves stdin flowing after an answer. Close it once the CLI
+        // reports its final file summary so the process can actually exit.
+        if (/\b(?:Created|Updated|Skipped) \d+ files?/.test(pending))
+          closeInput()
+      }
+    }
+  }
+  await Promise.all([
+    forward(child.stdout, process.stdout),
+    forward(child.stderr, process.stderr),
+  ])
+  closeInput()
+  if (await child.exited) throw new Error(`${command.join(" ")} failed`)
 }
+
 async function put(directory: string, path: string, value: unknown) {
   const target = resolve(directory, path)
   await mkdir(resolve(target, ".."), { recursive: true })
@@ -322,6 +366,74 @@ try {
         "--yes",
       ],
       dir
+    )
+    // Only the sandboxed generated consumer is edited. A second organ must
+    // not replace a consumer customization in the shared renderer.
+    const sharedViewer = resolve(dir, `${componentDir}/organ-viewer.tsx`)
+    const customizedViewer =
+      (await readFile(sharedViewer, "utf8")) +
+      "\n// Consumer customization: keep this renderer.\n"
+    await writeFile(sharedViewer, customizedViewer)
+    await run(
+      [
+        "node",
+        shadcn,
+        "add",
+        framework === "vite"
+          ? "@organui/brain"
+          : `http://127.0.0.1:${server.port}/brain.json`,
+        "--yes",
+      ],
+      dir,
+      true
+    )
+    if (!(await Bun.file(resolve(dir, `${componentDir}/brain.tsx`)).exists()))
+      throw new Error("The second organ was not installed")
+    if ((await readFile(sharedViewer, "utf8")) !== customizedViewer)
+      throw new Error("Installing Brain replaced the existing organ renderer")
+    // Restore the generated fixture before the remaining shared-file installs.
+    await writeFile(
+      sharedViewer,
+      customizedViewer.replace(
+        "\n// Consumer customization: keep this renderer.\n",
+        ""
+      )
+    )
+    const organs = catalog.items.filter(
+      (item) => "categories" in item && item.categories?.includes("organ")
+    )
+    // Install all organs together through the real CLI and compile their public
+    // APIs. Next uses URLs; Vite also exercises a namespace and custom aliases.
+    await run(
+      [
+        "node",
+        shadcn,
+        "add",
+        ...organs.map(({ name }) =>
+          framework === "vite"
+            ? `@organui/${name}`
+            : `http://127.0.0.1:${server.port}/${name}.json`
+        ),
+        ...(framework === "vite" ? ["--overwrite"] : []),
+        "--yes",
+      ],
+      dir
+    )
+    await put(
+      dir,
+      "src/all-organs.tsx",
+      source(
+        '"use client"\n' +
+          organs
+            .map(({ name }) => {
+              const component = name
+                .split("-")
+                .map((word) => word[0]!.toUpperCase() + word.slice(1))
+                .join("")
+              return `import { ${component}, type ${component}Props } from "@/components/${name}"\nexport function ${component}Example(props: ${component}Props) { return <${component} {...props} /> }`
+            })
+            .join("\n")
+      )
     )
     await run(
       [

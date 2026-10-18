@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
 import { readFile } from "node:fs/promises"
 import { registrySchema, registryItemSchema } from "shadcn/schema"
-import { heartModel } from "@workspace/registry/organ-viewer/heart"
+import { heartModel } from "@workspace/registry/heart"
 import { fixtureGlb } from "../../scripts/fixture-glb.js"
 
 test("documentation interaction, styling and registry serving", async ({
@@ -277,39 +277,86 @@ test("organ pages pair the viewer with the anatomy tree", async ({
   await expect(
     page.getByRole("heading", { name: "Heart", level: 1 })
   ).toBeVisible()
-  const viewer = page.getByRole("region", { name: "Interactive heart model" })
-  await expect(viewer.getByRole("toolbar")).toBeVisible()
-  // The panel starts closed; opening it moves focus to its search field.
-  // Phones get a sheet, which covers the viewer until it is closed.
-  const phone = (page.viewportSize()?.width ?? 0) < 1024
-  await expect(page.getByRole("tree")).toHaveCount(0)
-  const anatomy = page.getByRole("button", { name: "Anatomy", exact: true })
-  await expect(anatomy).toHaveAttribute("aria-pressed", "false")
-  await anatomy.click()
-  // A modal sheet hides the rest of the page, the toggle included.
-  if (phone)
-    await expect(
-      page.getByRole("dialog", { name: "Heart anatomy" })
-    ).toBeVisible()
-  else await expect(anatomy).toHaveAttribute("aria-pressed", "true")
-  await expect(page.getByRole("searchbox")).toBeFocused()
-  await page.getByRole("button", { name: "Left atrium", exact: true }).click()
-  if (phone) {
-    await page.keyboard.press("Escape")
-    await expect(page.getByRole("dialog")).toHaveCount(0)
-    await expect(anatomy).toBeFocused()
-  }
-  await expect(page.getByRole("status").last()).toContainText("Left atrium:")
-  await viewer.click()
-  if (phone) await anatomy.click()
+  const demo = page.getByRole("group", { name: "Heart example", exact: true })
   await expect(
-    page.getByRole("treeitem", { name: "Right atrium", exact: true })
+    demo.getByRole("toolbar", { name: "View controls" })
+  ).toBeVisible()
+  await demo.getByRole("button", { name: "View Code", exact: true }).click()
+  await expect(demo.getByLabel("Heart code")).toContainText(
+    'from "@/components/heart"'
+  )
+  await expect(demo.getByLabel("Heart code")).toContainText("<Heart")
+  await expect(demo.getByLabel("Heart code")).not.toContainText(
+    "controls={false}"
+  )
+  // Revealing code preserves the live default demo and its context.
+  await expect(demo.locator("canvas")).toHaveCount(1)
+  const headings = await page
+    .getByRole("heading", { level: 2 })
+    .allTextContents()
+  expect(headings.indexOf("Installation")).toBeLessThan(
+    headings.indexOf("Usage")
+  )
+  expect(headings.indexOf("Usage")).toBeLessThan(
+    headings.indexOf("Without Controls")
+  )
+  const withoutControls = page.getByRole("group", {
+    name: "Heart Without Controls example",
+    exact: true,
+  })
+  await withoutControls.scrollIntoViewIfNeeded()
+  await expect(
+    withoutControls.getByRole("region", {
+      name: "Heart without controls example",
+    })
+  ).toBeVisible()
+  await expect(withoutControls.getByRole("toolbar")).toHaveCount(0)
+  await withoutControls
+    .getByRole("button", { name: "View Code", exact: true })
+    .click()
+  await expect(
+    withoutControls.getByLabel("Heart Without Controls code")
+  ).toContainText("controls={false}")
+  const controlled = page.getByRole("group", {
+    name: "Heart Controlled Selection example",
+    exact: true,
+  })
+  await controlled.scrollIntoViewIfNeeded()
+  await expect(
+    controlled.getByRole("toolbar", { name: "View controls" })
+  ).toBeVisible()
+  await controlled
+    .getByRole("button", { name: "View Code", exact: true })
+    .click()
+  await expect(
+    controlled.getByLabel("Heart Controlled Selection code")
+  ).toContainText("onSelectionChange={setSelectedId}")
+  const examples = page.getByRole("group", {
+    name: "Heart With Anatomy Panel example",
+    exact: true,
+  })
+  await examples.scrollIntoViewIfNeeded()
+  const viewer = examples.getByRole("region", {
+    name: "Heart with anatomy example",
+  })
+  await expect(viewer.getByRole("toolbar")).toBeVisible()
+  await expect(examples.locator("canvas")).toHaveCount(1)
+  const tree = examples.getByRole("tree", { name: "Heart anatomy" })
+  await expect(tree).toBeVisible()
+  await examples
+    .getByRole("button", { name: "Left atrium", exact: true })
+    .click()
+  await expect(
+    tree.getByRole("treeitem", { name: "Left atrium", exact: true })
   ).toHaveAttribute("aria-selected", "true")
-  await page.getByRole("searchbox").focus()
-  await page.keyboard.press("Escape")
-  await expect(page.getByRole("tree")).toHaveCount(0)
-  await expect(anatomy).toBeFocused()
-  await expect(anatomy).toHaveAttribute("aria-pressed", "false")
+  await viewer.click()
+  await expect(
+    tree.getByRole("treeitem", { name: "Right atrium", exact: true })
+  ).toHaveAttribute("aria-selected", "true")
+  await examples.getByRole("button", { name: "View Code", exact: true }).click()
+  await expect(
+    examples.getByLabel("Heart With Anatomy Panel code")
+  ).toContainText("<Heart")
   await expect(
     page.getByRole("region", { name: "Installation command" })
   ).toHaveText("bunx shadcn@4.21.0 add https://organui.com/r/heart.json")
@@ -318,6 +365,15 @@ test("organ pages pair the viewer with the anatomy tree", async ({
       () => document.documentElement.scrollWidth <= window.innerWidth
     )
   ).toBe(true)
+  const api = page.getByRole("table", { name: "Heart props" })
+  await api.focus()
+  await expect(api).toBeFocused()
+  if ((page.viewportSize()?.width ?? 0) < 768) {
+    await api.press("ArrowRight")
+    await expect
+      .poll(() => api.evaluate((table) => table.parentElement!.scrollLeft))
+      .toBeGreaterThan(0)
+  }
   const axe = await new AxeBuilder({ page }).analyze()
   expect(axe.violations).toEqual([])
   await page.screenshot({ path: info.outputPath("organ.png"), fullPage: true })
@@ -326,7 +382,7 @@ test("organ pages pair the viewer with the anatomy tree", async ({
   )
   expect(item.files?.map((file) => file.path)).toEqual([
     "registry/base-nova/organ-viewer/organ-viewer.tsx",
-    "registry/base-nova/organ-viewer/heart.tsx",
+    "registry/base-nova/heart/heart.tsx",
   ])
   expect(errors).toEqual([])
 })
@@ -341,7 +397,7 @@ test("a model that fails to load explains itself and retries", async ({
   })
   await page.goto("/docs/heart")
   const alert = page
-    .getByRole("region", { name: "Interactive heart model" })
+    .getByRole("region", { name: "Heart default example" })
     .getByRole("alert")
   await expect(alert).toContainText("The heart model couldn’t load")
   await expect(alert).toContainText("HTTP 404")
@@ -414,7 +470,7 @@ test("blocks gallery previews and installs every block", async ({
   expect(errors).toEqual([])
 })
 
-test("a model the site serves itself loads from its own origin", async ({
+test("a public organ component loads its attributed hosted model", async ({
   page,
   request,
 }, info) => {
@@ -422,6 +478,15 @@ test("a model the site serves itself loads from its own origin", async ({
   page.on("pageerror", (error) => errors.push(error.message))
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text())
+  })
+  // The public Breast component uses its canonical model URL. Serve the
+  // committed asset in this test instead of fetching the deployed website.
+  await page.route("https://organui.com/models/breast.glb", async (route) => {
+    const response = await request.get("/models/breast.glb")
+    await route.fulfill({
+      body: await response.body(),
+      contentType: "model/gltf-binary",
+    })
   })
   // Installs in other apps fetch organui.com/models cross-origin.
   const model = await request.get("/models/breast.glb")
@@ -433,7 +498,7 @@ test("a model the site serves itself loads from its own origin", async ({
   )
   await page.goto("/docs/breast")
   await loaded
-  const viewer = page.getByRole("region", { name: "Interactive breast model" })
+  const viewer = page.getByRole("region", { name: "Breast default example" })
   await expect(viewer.getByRole("toolbar")).toBeVisible()
   await expect(viewer.getByRole("alert")).toHaveCount(0)
   await expect(
@@ -636,4 +701,53 @@ test("tree, sequence field and option groups remain usable in dark mode", async 
     })
   }
   expect(errors).toEqual([])
+})
+
+test("component previews reveal copyable code without resetting the demo", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"])
+  await page.goto("/docs/anatomy-tree")
+  const example = page.getByRole("group", {
+    name: "Anatomy tree example",
+    exact: true,
+  })
+  await example
+    .getByRole("button", { name: "Left ventricle", exact: true })
+    .click()
+  const state = example.getByRole("status")
+  await expect(state).toHaveText("Selected: lv")
+  const reveal = example.getByRole("button", { name: "View Code", exact: true })
+  await reveal.focus()
+  await reveal.press("Enter")
+  const snippet = example.getByLabel("Anatomy tree code")
+  await expect(snippet).toBeFocused()
+  const expectedSource = (
+    await readFile(
+      new URL(
+        "examples/anatomy-tree-demo.tsx",
+        import.meta.resolve("web/package.json")
+      ),
+      "utf8"
+    )
+  )
+    .replaceAll(
+      "@workspace/registry/anatomy-tree",
+      "@/components/ui/anatomy-tree"
+    )
+    .trimEnd()
+  await expect(snippet).toHaveText(expectedSource, { useInnerText: false })
+  await expect(example.getByRole("tree")).toBeVisible()
+  await expect(state).toHaveText("Selected: lv")
+  await example.getByRole("button", { name: "Copy", exact: true }).click()
+  await expect
+    .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+    .toBe(expectedSource)
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth
+    )
+  ).toBe(true)
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
 })

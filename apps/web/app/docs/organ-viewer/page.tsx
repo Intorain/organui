@@ -1,6 +1,6 @@
+import { ComponentPreview } from "@/components/component-preview"
 import Link from "next/link"
-import { OrganExplorer } from "@workspace/registry/blocks/explorer-01/components/organ-explorer"
-import { organModels } from "@/lib/organ-models"
+import { OrganExamples } from "@/components/organ-examples"
 import { codeBlock, docsMetadata, registryItems, shadcn } from "@/lib/registry"
 import { site } from "@/lib/site"
 
@@ -40,7 +40,6 @@ const handle = `const viewer = useRef<OrganViewerHandle>(null)
 <OrganViewer ref={viewer} model={kidneyModel} />`
 
 export default async function Page() {
-  const heart = await organModels.heart!()
   const organs = registryItems.filter(({ organ }) => organ)
   return (
     <div className="flex flex-col gap-10">
@@ -55,9 +54,11 @@ export default async function Page() {
           and emphasis.
         </p>
       </header>
-      <OrganExplorer model={heart} />
+      <ComponentPreview name="organ-viewer-demo" />
       <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-semibold">Install</h2>
+        <h2 id="installation" className="text-2xl font-semibold">
+          Installation
+        </h2>
         <p>
           Most apps want a ready-made organ:{" "}
           {organs.map((item, index) => (
@@ -90,7 +91,9 @@ export default async function Page() {
         </a>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-semibold">Describe a model</h2>
+        <h2 id="usage" className="text-2xl font-semibold">
+          Usage
+        </h2>
         <pre
           tabIndex={0}
           role="region"
@@ -108,6 +111,7 @@ export default async function Page() {
           <code>structureIds</code> frames only those structures.
         </p>
       </section>
+      <OrganExamples name="organ-viewer" />
       <section className="flex flex-col gap-4">
         <h2 className="text-2xl font-semibold">Behaviour</h2>
         <p>

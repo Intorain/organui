@@ -1,3 +1,4 @@
+import { ComponentPreview } from "@/components/component-preview"
 import {
   codeBlock,
   docsMetadata,
@@ -5,7 +6,6 @@ import {
   shadcn,
 } from "@/lib/registry"
 import { site } from "@/lib/site"
-import { Example } from "./example"
 
 export const metadata = docsMetadata(
   "Medication schedule",
@@ -56,9 +56,11 @@ export default function Page() {
           one taken or skipped and warnings for interactions you supply.
         </p>
       </header>
-      <Example />
+      <ComponentPreview name="medication-schedule-demo" />
       <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-semibold">Install</h2>
+        <h2 id="installation" className="text-2xl font-semibold">
+          Installation
+        </h2>
         <p>
           In a React 19 project configured with shadcn, Tailwind CSS 4, and the
           Base UI / Nova theme, run the command below.
@@ -98,7 +100,9 @@ export default function Page() {
         </a>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-semibold">Connect your data</h2>
+        <h2 id="usage" className="text-2xl font-semibold">
+          Usage
+        </h2>
         <pre
           tabIndex={0}
           role="region"
