@@ -6,6 +6,7 @@ import {
   labResultsExampleData,
 } from "@/lib/examples"
 import { AnatomyTree } from "@workspace/registry/anatomy-tree"
+import { EcgTrace, syntheticEcg } from "@workspace/registry/ecg-trace"
 import { VitalSigns } from "@workspace/registry/vital-signs"
 import { LabResultsTable } from "@workspace/registry/lab-results"
 import { OrganPreview } from "@/components/organ-preview"
@@ -51,6 +52,12 @@ function VitalSignsPreview() {
   )
 }
 
+const ecgPreview = syntheticEcg({ duration: 4 })
+
+function EcgTracePreview() {
+  return <EcgTrace samples={ecgPreview} label="Preview ECG" />
+}
+
 function OrganViewerPreview() {
   return <OrganPreview name="heart" organ="Heart" />
 }
@@ -92,6 +99,7 @@ function MedicationSchedulePreview() {
 // browser suite requires one for every catalog item.
 const previews: Record<string, ComponentType> = {
   "anatomy-tree": AnatomyTreePreview,
+  "ecg-trace": EcgTracePreview,
   "organ-viewer": OrganViewerPreview,
   "medication-schedule": MedicationSchedulePreview,
   "vital-signs": VitalSignsPreview,

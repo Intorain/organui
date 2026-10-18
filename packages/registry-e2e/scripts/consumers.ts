@@ -94,6 +94,15 @@ export default function MoleculeHarness(){
  const [pair,setPair]=useState<number|null>(null)
  return <main style={{maxWidth:720,margin:"auto",padding:20}}><h1>Installed molecules</h1><MoleculeViewer src="/crambin.pdb" selectedId={residue} onSelectionChange={setResidue}/><output aria-label="Residue">{residue??"none"}</output><button onClick={()=>setResidue("A:3")}>Select Cys 3</button><DnaHelix sequence="ATGC" selectedIndex={pair} onSelectionChange={setPair} autoRotate={false}/><output aria-label="Pair">{pair??"none"}</output></main>
 }`
+// The ECG harness pairs a recorded strip with a live synthetic stream.
+const ecgHarness = `"use client"
+import { useMemo } from "react"
+import { EcgTrace, syntheticEcg, syntheticEcgStream } from "@/components/ui/ecg-trace"
+const recording = syntheticEcg({ duration: 5 })
+export default function EcgHarness(){
+ const stream = useMemo(()=>syntheticEcgStream({heartRate:90}),[])
+ return <main style={{maxWidth:720,margin:"auto",padding:20}}><h1>Installed ECG trace</h1><EcgTrace samples={recording} label="Recorded ECG"/><EcgTrace stream={stream} label="Live ECG"/></main>
+}`
 // Vite has no file routing, so the CLI skips block pages there; these stand in
 // for them. Next.js serves the installed pages at the same paths.
 const blockHarness = `import { OrganExplorer } from "@/components/organ-explorer"
@@ -201,6 +210,7 @@ try {
     await put(dir, "src/lab-harness.tsx", labHarness)
     await put(dir, "src/molecule-harness.tsx", moleculeHarness)
     await put(dir, "src/medication-harness.tsx", medicationHarness)
+    await put(dir, "src/ecg-harness.tsx", ecgHarness)
     await mkdir(resolve(dir, "public"), { recursive: true })
     await writeFile(
       resolve(dir, "public/heart.glb"),
@@ -241,6 +251,11 @@ try {
       )
       await put(
         dir,
+        "src/app/ecg/page.tsx",
+        'export {default} from "../../ecg-harness"'
+      )
+      await put(
+        dir,
         "src/app/layout.tsx",
         'import "../globals.css"; export const metadata = {title:"Anatomy tree consumer"}; export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>}'
       )
@@ -254,7 +269,7 @@ try {
       await put(
         dir,
         "src/main.tsx",
-        'import React from "react";import {createRoot} from "react-dom/client";import Harness from "./harness";import OrganHarness from "./organ-harness";import MoleculeHarness from "./molecule-harness";import BlockHarness from "./block-harness";import LabHarness from "./lab-harness";import MedicationHarness from "./medication-harness";import VitalsHarness from "./vitals-harness";import "./globals.css";const path=location.pathname;createRoot(document.getElementById("root")!).render(path==="/organ"?<OrganHarness/>:path==="/molecule"?<MoleculeHarness/>:path==="/lab"?<LabHarness/>:path==="/medication"?<MedicationHarness/>:path==="/vitals"?<VitalsHarness/>:["/explorer","/workspace","/organs"].includes(path)?<BlockHarness path={path}/>:<Harness/>);'
+        'import React from "react";import {createRoot} from "react-dom/client";import Harness from "./harness";import OrganHarness from "./organ-harness";import MoleculeHarness from "./molecule-harness";import EcgHarness from "./ecg-harness";import BlockHarness from "./block-harness";import LabHarness from "./lab-harness";import MedicationHarness from "./medication-harness";import VitalsHarness from "./vitals-harness";import "./globals.css";const path=location.pathname;createRoot(document.getElementById("root")!).render(path==="/organ"?<OrganHarness/>:path==="/ecg"?<EcgHarness/>:path==="/molecule"?<MoleculeHarness/>:path==="/lab"?<LabHarness/>:path==="/medication"?<MedicationHarness/>:path==="/vitals"?<VitalsHarness/>:["/explorer","/workspace","/organs"].includes(path)?<BlockHarness path={path}/>:<Harness/>);'
       )
       await put(dir, "src/block-harness.tsx", blockHarness)
       await put(
@@ -315,7 +330,12 @@ try {
     )
     // These share shadcn components installed above; see the note on blocks
     // below for why Vite overwrites.
-    for (const item of ["molecule-viewer", "dna-helix", "vital-signs"])
+    for (const item of [
+      "molecule-viewer",
+      "dna-helix",
+      "vital-signs",
+      "ecg-trace",
+    ])
       await run(
         [
           "node",
@@ -363,7 +383,7 @@ try {
       )
         throw new Error(`Invalid installed ${name}`)
     }
-    for (const name of ["anatomy-tree", "medication-schedule"]) {
+    for (const name of ["anatomy-tree", "medication-schedule", "ecg-trace"]) {
       const installed = await readFile(
         resolve(dir, `src/components/ui/${name}.tsx`),
         "utf8"
