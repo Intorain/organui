@@ -223,9 +223,13 @@ test("registry index lists every component inside the docs layout", async ({
   await page.screenshot({ path: info.outputPath("index.png"), fullPage: true })
 
   const docs = page.getByRole("navigation", { name: "Documentation" })
+  const menu = page.getByRole("button", { name: "Menu", exact: true })
   if ((page.viewportSize()?.width ?? 0) < 768) {
     await expect(docs).toBeHidden()
-    await page.getByText("Menu", { exact: true }).click()
+    await expect(menu).toHaveAttribute("aria-expanded", "false")
+    await menu.focus()
+    await menu.press("Enter")
+    await expect(menu).toHaveAttribute("aria-expanded", "true")
   }
   await expect(
     docs.getByRole("link", { name: "Introduction" })
@@ -234,7 +238,8 @@ test("registry index lists every component inside the docs layout", async ({
     // Tapping the current page still closes the menu.
     await docs.getByRole("link", { name: "Introduction" }).click()
     await expect(docs).toBeHidden()
-    await page.getByText("Menu", { exact: true }).click()
+    await expect(menu).toHaveAttribute("aria-expanded", "false")
+    await menu.click()
   }
   await docs.getByRole("link", { name: "Anatomy tree" }).click()
   await expect(page).toHaveURL(/\/docs\/anatomy-tree$/)
@@ -243,7 +248,8 @@ test("registry index lists every component inside the docs layout", async ({
   ).toBeVisible()
   if ((page.viewportSize()?.width ?? 0) < 768) {
     await expect(docs).toBeHidden()
-    await page.getByText("Menu", { exact: true }).click()
+    await expect(menu).toHaveAttribute("aria-expanded", "false")
+    await menu.click()
   }
   await expect(
     docs.getByRole("link", { name: "Anatomy tree" })
@@ -554,6 +560,16 @@ test("the ECG trace page runs a live strip at the chosen rate", async ({
   await expect(live).toHaveAccessibleName(/about 110 beats per minute, live$/, {
     timeout: 10_000,
   })
+  // Re-activating the current choice must not leave the monitor unselected.
+  const fast = page.getByRole("button", { name: "Fast 110", exact: true })
+  await fast.click()
+  await expect(fast).toHaveAttribute("aria-pressed", "true")
+  await fast.press("ArrowLeft")
+  const normal = page.getByRole("button", { name: "Normal 72", exact: true })
+  await expect(normal).toBeFocused()
+  await normal.press("Space")
+  await expect(normal).toHaveAttribute("aria-pressed", "true")
+  await expect(fast).toHaveAttribute("aria-pressed", "false")
   await expect(
     page.getByRole("img", { name: /^Recorded ECG,/ })
   ).toHaveAccessibleName(/about 72 beats per minute$/)
@@ -564,5 +580,60 @@ test("the ECG trace page runs a live strip at the chosen rate", async ({
   ).toBe(true)
   const axe = await new AxeBuilder({ page }).analyze()
   expect(axe.violations).toEqual([])
+  expect(errors).toEqual([])
+})
+
+test("tree, sequence field and option groups remain usable in dark mode", async ({
+  page,
+}, info) => {
+  test.setTimeout(60_000)
+  await page.emulateMedia({ colorScheme: "dark" })
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  for (const name of [
+    "anatomy-tree",
+    "dna-helix",
+    "ecg-trace",
+    "vital-signs",
+  ]) {
+    await page.goto(`/docs/${name}`)
+    await expect(page.locator("html")).toHaveClass(/dark/)
+    if (name === "anatomy-tree") {
+      await page.getByRole("searchbox").fill("no such structure")
+      await expect(page.getByRole("status").first()).toContainText(
+        "No matching anatomy."
+      )
+      await page.getByRole("searchbox").fill("")
+      // Filtering is deferred. Wait for the tree's tab stop to return before
+      // pressing Tab, otherwise a slower render legitimately skips the tree.
+      await expect(page.getByRole("treeitem")).toHaveCount(7)
+      await page.getByRole("searchbox").press("Tab")
+      const heart = page.getByRole("treeitem", { name: "Heart", exact: true })
+      await expect(heart).toBeFocused()
+      await heart.press("Enter")
+      await expect(heart).toHaveAttribute("aria-selected", "true")
+    } else if (name === "dna-helix") {
+      const sequence = page.getByRole("textbox", { name: "Sequence, 5′ to 3′" })
+      await sequence.fill("ATGC")
+      await expect(sequence).toHaveValue("ATGC")
+    } else {
+      const choice = page.getByRole("button", {
+        name: name === "ecg-trace" ? "Fast 110" : "Low oxygen",
+        exact: true,
+      })
+      await choice.click()
+      await expect(choice).toHaveAttribute("aria-pressed", "true")
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth
+      )
+    ).toBe(true)
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+    await page.screenshot({
+      path: info.outputPath(`${name}-dark.png`),
+      fullPage: true,
+    })
+  }
   expect(errors).toEqual([])
 })
