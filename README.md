@@ -6,35 +6,27 @@ through a [shadcn](https://ui.shadcn.com)-compatible registry at
 
 ## Install a component
 
-In a React 19 project configured with shadcn, Tailwind CSS 4 and the Base UI
-preset:
+In a React 19 project configured with shadcn, Tailwind CSS 4 and one of
+shadcn's Base UI styles:
 
 ```bash
-bunx shadcn@4.22.1 add https://organui.com/r/anatomy-tree.json
+bunx shadcn@4.22.1 add @organui/anatomy-tree
 ```
 
-Or register the namespace once in `components.json`:
-
-```json
-{
-  "registries": {
-    "@organui": "https://organui.com/r/{name}.json"
-  }
-}
-```
-
-and run `bunx shadcn@4.22.1 add @organui/anatomy-tree`. The repository is also
-a GitHub registry, so `bunx shadcn@4.22.1 add organui/organui/anatomy-tree`
-installs straight from source (append `#<commit>` to pin a version; items
-that depend on other OrganUI items still resolve those through the namespace). See
-[the anatomy tree documentation](https://organui.com/docs/anatomy-tree).
+`@organui` is in shadcn's registry directory, so this needs no
+`components.json` entry; `bunx shadcn@4.22.1 add https://organui.com/r/anatomy-tree.json`
+works the same. The repository is also a GitHub registry
+(`bunx shadcn@4.22.1 add organui/organui/anatomy-tree`). The
+[installation guide](https://organui.com/docs/installation) covers each, the
+optional manual namespace entry, [theming](https://organui.com/docs/theming)
+and the [Base UI requirement](https://organui.com/docs/base-ui).
 
 ## Organs
 
 Every organ is a registry item named after it: `heart`, `brain`,
 `spinal-cord`, `nerves` and so on. The same viewer shows an animal cell's
 organelles as `cell`. Organs and the cell depend on `@organui/organ-viewer`,
-so register the namespace above first.
+which the CLI installs with them.
 
 ```bash
 bunx shadcn@4.22.1 add @organui/heart
@@ -48,12 +40,11 @@ import { Heart } from "@/components/heart"
 
 Each organ item ships only its own file: the organ's structures, views and
 model credit. Like shadcn's charts on `chart`, it depends on `organ-viewer`,
-which installs `organ-viewer.tsx` (three.js) once and is shared by every organ. The GLB itself stays in the explorer
-repository under its own licence (CC BY-SA 2.1 JP, CC BY-SA 4.0, CC BY 4.0 or
-CC0, per organ) and loads from a commit-pinned jsDelivr URL; organs without an
-explorer repository, such as `nerves` and `parathyroid`, are built in this
-repository and served from `organui.com/models/`, with an attribution file for
-each model. The viewer shows its credit. See [the organ viewer documentation](https://organui.com/docs/organ-viewer).
+which installs `organ-viewer.tsx` (three.js) once and is shared by every organ.
+The GLB loads at runtime and keeps its own licence (CC BY, CC BY-SA or CC0, per
+model); the viewer shows its credit. See
+[licences](https://organui.com/docs/licences) for every model and
+[the organ viewer documentation](https://organui.com/docs/components/organ-viewer).
 
 ## Molecules
 
@@ -73,8 +64,8 @@ import { MoleculeViewer } from "@/components/molecule-viewer"
 ```
 
 The docs site serves a small sample, crambin (PDB 1CRN, CC0), at
-`organui.com/models/crambin.pdb`. See [the molecule viewer](https://organui.com/docs/molecule-viewer)
-and [DNA helix](https://organui.com/docs/dna-helix) documentation.
+`organui.com/models/crambin.pdb`. See [the molecule viewer](https://organui.com/docs/components/molecule-viewer)
+and [DNA helix](https://organui.com/docs/components/dna-helix) documentation.
 
 ## ECG trace
 
@@ -89,7 +80,7 @@ import { EcgTrace, syntheticEcg } from "@/components/ui/ecg-trace"
 ;<EcgTrace samples={syntheticEcg({ heartRate: 72 })} sampleRate={250} />
 ```
 
-See [the ECG trace documentation](https://organui.com/docs/ecg-trace).
+See [the ECG trace documentation](https://organui.com/docs/components/ecg-trace).
 
 ## Dermatome map
 
@@ -104,7 +95,7 @@ import { DermatomeMap } from "@/components/ui/dermatome-map"
 ;<DermatomeMap selectedId={level} onSelectionChange={setLevel} />
 ```
 
-See [the dermatome map documentation](https://organui.com/docs/dermatome-map).
+See [the dermatome map documentation](https://organui.com/docs/components/dermatome-map).
 
 ## Medical image viewer
 
@@ -121,7 +112,7 @@ import { createHeadPhantom } from "@/lib/head-phantom"
 ;<ImageViewer {...createHeadPhantom()} presets={ctWindowPresets} />
 ```
 
-See [the medical image viewer documentation](https://organui.com/docs/image-viewer).
+See [the medical image viewer documentation](https://organui.com/docs/components/image-viewer).
 
 ## Blocks
 
