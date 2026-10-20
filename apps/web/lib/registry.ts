@@ -152,38 +152,41 @@ export const componentsIndex: NavLink & { description: string } = {
   description: "Every OrganUI component, grouped by category.",
 }
 
-export const organsHref = "/docs/components#organs"
+export const organsPage: NavLink & { description: string } = {
+  title: "Organs",
+  href: "/docs/components/organs",
+  description: "Every organ as a picture, linking to its page.",
+}
 
 export const mainNav: NavLink[] = [
   { title: "Docs", href: "/docs" },
   { title: "Components", href: componentsIndex.href },
-  { title: "Organs", href: organsHref },
+  { title: organsPage.title, href: organsPage.href },
   { title: "Blocks", href: "/blocks" },
 ]
 
 // The sidebar lists the guides and every component except the organs, which
-// are one link to their section of the index; each organ page is still in
+// the header's Organs link opens as a gallery; each organ page is still in
 // search and in the previous and next links.
 export const docsNav: DocsNavSection[] = [
   { title: "Sections", items: [...guides, componentsIndex] },
   ...componentGroups.map(({ id, title }) => ({
     title,
-    items: [
-      ...registryItems
-        .filter((item) => item.group === id && !item.organ)
-        .map(({ title, href }) => ({ title, href })),
-      ...(id === "organs"
-        ? [{ title: `Browse all ${organs.length} organs`, href: organsHref }]
-        : []),
-    ],
+    items: registryItems
+      .filter((item) => item.group === id && !item.organ)
+      .map(({ title, href }) => ({ title, href })),
   })),
 ]
 
 // Reading order for the previous and next links.
+// The organs gallery comes before the organs, after the viewer and tree.
 const pageOrder: NavLink[] = [
   ...guides,
   componentsIndex,
-  ...registryItems.map(({ title, href }) => ({ title, href })),
+  ...registryItems.flatMap(({ title, href, name }) => [
+    ...(name === organs[0]?.name ? [organsPage] : []),
+    { title, href },
+  ]),
 ]
 
 export function neighbours(href: string) {

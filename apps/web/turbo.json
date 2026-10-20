@@ -11,7 +11,11 @@
       "env": ["VERCEL_ENV"]
     },
     "dev": {
-      "dependsOn": ["stage-registry"]
+      "dependsOn": ["stage-registry"],
+      "env": ["ORGANUI_THUMBNAILS", "NODE_ENV"]
+    },
+    "test": {
+      "dependsOn": ["transit"]
     }
   }
 }
