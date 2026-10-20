@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { isProduction, site } from "@/lib/site"
 
@@ -37,6 +37,14 @@ export const metadata: Metadata = {
   robots: { index: isProduction, follow: isProduction },
 }
 
+// Matches --background in light and dark.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -54,6 +62,12 @@ export default function RootLayout({
       )}
     >
       <body>
+        <a
+          href="#main"
+          className="sr-only rounded-md bg-background px-3 py-2 text-sm font-medium focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:ring-2 focus:ring-ring"
+        >
+          Skip to content
+        </a>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
