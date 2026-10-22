@@ -195,6 +195,7 @@ export const chartTypes = [
   { type: "pie", title: "Pie Charts" },
   { type: "radar", title: "Radar Charts" },
   { type: "radial", title: "Radial Charts" },
+  { type: "tooltip", title: "Tooltips" },
 ] as const
 
 export type ChartType = (typeof chartTypes)[number]["type"]
@@ -208,6 +209,8 @@ export const chartItems = catalog.items
     type: (item.categories ?? [])
       .find((category) => category.startsWith("charts-"))!
       .replace("charts-", "") as ChartType,
+    // Interactive charts span the grid, as on shadcn/ui.
+    fullWidth: Boolean("meta" in item && item.meta?.fullWidth),
     install: install(item),
   }))
 

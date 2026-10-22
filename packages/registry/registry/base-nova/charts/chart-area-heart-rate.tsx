@@ -1,21 +1,32 @@
 "use client"
 
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Label,
+  ReferenceArea,
+  XAxis,
+  YAxis,
+} from "recharts"
 
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
+import { IconPlaceholder } from "@/icons/icon-placeholder"
 
 export const description = "Heart rate across a shift, as a gradient area chart"
 
@@ -42,12 +53,50 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const latest = chartData.at(-1)!
+// The usual adult resting range, drawn behind the readings.
+const normal = { low: 60, high: 100 }
+const inRange =
+  latest.heartRate >= normal.low && latest.heartRate <= normal.high
+
+const peak = chartData.reduce((a, b) => (b.heartRate > a.heartRate ? b : a))
+
 export function ChartAreaHeartRate() {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Heart rate</CardTitle>
         <CardDescription>Hourly, across a day shift</CardDescription>
+        <CardAction className="flex flex-col items-end gap-1.5">
+          <div className="text-2xl leading-none font-semibold">
+            {latest.heartRate}{" "}
+            <span className="text-sm font-normal text-muted-foreground">
+              bpm
+            </span>
+          </div>
+          <Badge variant="outline">
+            {inRange ? (
+              <IconPlaceholder
+                lucide="CheckIcon"
+                tabler="IconCheck"
+                hugeicons="Tick02Icon"
+                phosphor="CheckIcon"
+                remixicon="RiCheckLine"
+                data-icon="inline-start"
+              />
+            ) : (
+              <IconPlaceholder
+                lucide="TriangleAlertIcon"
+                tabler="IconAlertTriangle"
+                hugeicons="Alert02Icon"
+                phosphor="WarningIcon"
+                remixicon="RiAlertLine"
+                data-icon="inline-start"
+              />
+            )}
+            {inRange ? "In range" : "Out of range"}
+          </Badge>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -70,6 +119,19 @@ export function ChartAreaHeartRate() {
               tickMargin={8}
               domain={[50, 110]}
             />
+            <ReferenceArea
+              y1={normal.low}
+              y2={normal.high}
+              fill="var(--muted-foreground)"
+              fillOpacity={0.08}
+            >
+              <Label
+                value={`Normal ${normal.low}–${normal.high}`}
+                position="insideTopLeft"
+                className="fill-muted-foreground"
+                fontSize={11}
+              />
+            </ReferenceArea>
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <defs>
               <linearGradient id="fillHeartRate" x1="0" y1="0" x2="0" y2="1">
@@ -94,8 +156,13 @@ export function ChartAreaHeartRate() {
           </AreaChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        Peaks at 91 bpm at 10:00; a fictional patient.
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          Peaks at {peak.heartRate} bpm at {peak.time}
+        </div>
+        <div className="leading-none text-muted-foreground">
+          {chartData[0]!.time} to {latest.time}; a fictional patient
+        </div>
       </CardFooter>
     </Card>
   )

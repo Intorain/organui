@@ -1,6 +1,13 @@
 "use client"
 
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Label,
+  ReferenceLine,
+  XAxis,
+} from "recharts"
 
 import {
   Card,
@@ -38,6 +45,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const average = Math.round(
+  chartData.reduce((sum, { visits }) => sum + visits, 0) / chartData.length
+)
+
+const busiest = chartData.reduce((a, b) => (b.visits > a.visits ? b : a))
+
 export function ChartBarEdVisits() {
   return (
     <Card>
@@ -47,7 +60,7 @@ export function ChartBarEdVisits() {
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={chartData}>
+          <BarChart accessibilityLayer data={chartData} margin={{ right: 52 }}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="day"
@@ -61,11 +74,28 @@ export function ChartBarEdVisits() {
               content={<ChartTooltipContent hideLabel />}
             />
             <Bar dataKey="visits" fill="var(--color-visits)" radius={8} />
+            <ReferenceLine
+              y={average}
+              stroke="var(--muted-foreground)"
+              strokeDasharray="4 4"
+            >
+              <Label
+                value={`Avg ${average}`}
+                position="right"
+                className="fill-muted-foreground"
+                fontSize={11}
+              />
+            </ReferenceLine>
           </BarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        Mondays are busiest; illustrative data.
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          {busiest.day}s are busiest, at {busiest.visits} visits
+        </div>
+        <div className="leading-none text-muted-foreground">
+          Average per weekday; illustrative data
+        </div>
       </CardFooter>
     </Card>
   )

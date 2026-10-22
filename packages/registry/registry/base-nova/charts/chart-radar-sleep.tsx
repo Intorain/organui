@@ -37,6 +37,8 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const worst = chartData.reduce((a, b) => (b.score > a.score ? b : a))
+
 export function ChartRadarSleep() {
   return (
     <Card>
@@ -65,8 +67,13 @@ export function ChartRadarSleep() {
           </RadarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        Falling asleep is the hardest part; a fictional patient.
+      <CardFooter className="flex-col gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          {worst.domain} scores worst, at {worst.score} of 3
+        </div>
+        <div className="leading-none text-muted-foreground">
+          Higher is worse; a fictional patient
+        </div>
       </CardFooter>
     </Card>
   )

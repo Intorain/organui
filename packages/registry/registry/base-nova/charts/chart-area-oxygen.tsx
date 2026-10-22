@@ -4,18 +4,21 @@ import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
+import { IconPlaceholder } from "@/icons/icon-placeholder"
 
 export const description = "Oxygen flow rate over time, as a step area chart"
 
@@ -39,12 +42,48 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const latest = chartData.at(-1)!
+const onRoomAir = latest.flow === 0
+
+const first = chartData[0]!
+const offAt = chartData.find(({ flow }) => flow === 0)?.time
+
 export function ChartAreaOxygen() {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Oxygen weaning</CardTitle>
         <CardDescription>Nasal cannula flow, litres per minute</CardDescription>
+        <CardAction className="flex flex-col items-end gap-1.5">
+          <div className="text-2xl leading-none font-semibold">
+            {latest.flow}{" "}
+            <span className="text-sm font-normal text-muted-foreground">
+              L/min
+            </span>
+          </div>
+          <Badge variant="outline">
+            {onRoomAir ? (
+              <IconPlaceholder
+                lucide="CheckIcon"
+                tabler="IconCheck"
+                hugeicons="Tick02Icon"
+                phosphor="CheckIcon"
+                remixicon="RiCheckLine"
+                data-icon="inline-start"
+              />
+            ) : (
+              <IconPlaceholder
+                lucide="TriangleAlertIcon"
+                tabler="IconAlertTriangle"
+                hugeicons="Alert02Icon"
+                phosphor="WarningIcon"
+                remixicon="RiAlertLine"
+                data-icon="inline-start"
+              />
+            )}
+            {onRoomAir ? "Room air" : "On oxygen"}
+          </Badge>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -74,8 +113,32 @@ export function ChartAreaOxygen() {
           </AreaChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        Off oxygen by 16:00; a fictional patient.
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          {offAt ? `Off oxygen by ${offAt}` : `On ${latest.flow} L/min`}{" "}
+          {latest.flow < first.flow ? (
+            <IconPlaceholder
+              lucide="TrendingDownIcon"
+              tabler="IconTrendingDown"
+              hugeicons="ChartDownIcon"
+              phosphor="TrendDownIcon"
+              remixicon="RiArrowDownLine"
+              className="size-4"
+            />
+          ) : (
+            <IconPlaceholder
+              lucide="TrendingUpIcon"
+              tabler="IconTrendingUp"
+              hugeicons="ChartUpIcon"
+              phosphor="TrendUpIcon"
+              remixicon="RiArrowUpLine"
+              className="size-4"
+            />
+          )}
+        </div>
+        <div className="leading-none text-muted-foreground">
+          Started at {first.flow} L/min; a fictional patient
+        </div>
       </CardFooter>
     </Card>
   )

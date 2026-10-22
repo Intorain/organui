@@ -36,6 +36,8 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const worst = chartData.reduce((a, b) => (b.severity > a.severity ? b : a))
+
 export function ChartRadarSymptoms() {
   return (
     <Card>
@@ -60,8 +62,13 @@ export function ChartRadarSymptoms() {
           </RadarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        Fatigue scores highest; a fictional patient.
+      <CardFooter className="flex-col gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          {worst.symptom} scores highest, at {worst.severity} of 10
+        </div>
+        <div className="leading-none text-muted-foreground">
+          Self-reported today; a fictional patient
+        </div>
       </CardFooter>
     </Card>
   )

@@ -36,6 +36,8 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const top = chartData.reduce((a, b) => (b.discharges > a.discharges ? b : a))
+
 export function ChartBarDiagnoses() {
   return (
     <Card>
@@ -72,8 +74,13 @@ export function ChartBarDiagnoses() {
           </BarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        Illustrative data, not a real hospital&apos;s.
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          {top.diagnosis} leads, with {top.discharges} discharges
+        </div>
+        <div className="leading-none text-muted-foreground">
+          Illustrative data, not a real hospital&apos;s
+        </div>
       </CardFooter>
     </Card>
   )

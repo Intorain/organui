@@ -1,6 +1,14 @@
 "use client"
 
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Label,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from "recharts"
 
 import {
   Card,
@@ -42,6 +50,13 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+// Beds the hospital can staff, the ceiling the census works against.
+const staffedBeds = 260
+
+const busiest = chartData.reduce((a, b) =>
+  b.inpatient + b.observation > a.inpatient + a.observation ? b : a
+)
+
 export function ChartAreaCensus() {
   return (
     <Card>
@@ -64,6 +79,7 @@ export function ChartAreaCensus() {
               tickMargin={8}
               tickFormatter={(value) => value.slice(0, 3)}
             />
+            <YAxis hide domain={[0, staffedBeds + 20]} />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator="dot" />}
@@ -85,11 +101,29 @@ export function ChartAreaCensus() {
               stackId="a"
             />
             <ChartLegend content={<ChartLegendContent />} />
+            <ReferenceLine
+              y={staffedBeds}
+              stroke="var(--muted-foreground)"
+              strokeDasharray="4 4"
+            >
+              <Label
+                value={`Staffed beds ${staffedBeds}`}
+                position="insideTopRight"
+                className="fill-muted-foreground"
+                fontSize={11}
+              />
+            </ReferenceLine>
           </AreaChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        Illustrative data for one hospital.
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          Busiest in {busiest.month}, at{" "}
+          {busiest.inpatient + busiest.observation} beds
+        </div>
+        <div className="leading-none text-muted-foreground">
+          Illustrative data for one hospital
+        </div>
       </CardFooter>
     </Card>
   )

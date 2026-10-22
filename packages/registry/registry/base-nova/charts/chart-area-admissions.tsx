@@ -16,6 +16,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
+import { IconPlaceholder } from "@/icons/icon-placeholder"
 
 export const description = "Hospital admissions by month, as an area chart"
 
@@ -35,6 +36,15 @@ const chartConfig = {
     color: "var(--chart-2)",
   },
 } satisfies ChartConfig
+
+const first = chartData[0]!
+const last = chartData.at(-1)!
+const change = Math.round(
+  ((last.admissions - first.admissions) / first.admissions) * 100
+)
+const busiest = chartData.reduce((a, b) =>
+  b.admissions > a.admissions ? b : a
+)
 
 export function ChartAreaAdmissions() {
   return (
@@ -72,8 +82,32 @@ export function ChartAreaAdmissions() {
           </AreaChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        Busiest in February; illustrative data.
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          {change < 0 ? "Down" : "Up"} {Math.abs(change)}% since {first.month}{" "}
+          {change < 0 ? (
+            <IconPlaceholder
+              lucide="TrendingDownIcon"
+              tabler="IconTrendingDown"
+              hugeicons="ChartDownIcon"
+              phosphor="TrendDownIcon"
+              remixicon="RiArrowDownLine"
+              className="size-4"
+            />
+          ) : (
+            <IconPlaceholder
+              lucide="TrendingUpIcon"
+              tabler="IconTrendingUp"
+              hugeicons="ChartUpIcon"
+              phosphor="TrendUpIcon"
+              remixicon="RiArrowUpLine"
+              className="size-4"
+            />
+          )}
+        </div>
+        <div className="leading-none text-muted-foreground">
+          Busiest in {busiest.month}; illustrative data
+        </div>
       </CardFooter>
     </Card>
   )

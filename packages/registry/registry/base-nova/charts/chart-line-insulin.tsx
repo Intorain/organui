@@ -4,6 +4,7 @@ import { CartesianGrid, Line, LineChart, XAxis } from "recharts"
 
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -16,6 +17,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
+import { IconPlaceholder } from "@/icons/icon-placeholder"
 
 export const description = "Basal insulin dose titration, as a step line chart"
 
@@ -37,12 +39,24 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const latest = chartData.at(-1)!
+
+const first = chartData[0]!
+
 export function ChartLineInsulin() {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Insulin titration</CardTitle>
         <CardDescription>Basal dose, adjusted every three days</CardDescription>
+        <CardAction className="flex flex-col items-end gap-1.5">
+          <div className="text-2xl leading-none font-semibold">
+            {latest.dose}{" "}
+            <span className="text-sm font-normal text-muted-foreground">
+              units
+            </span>
+          </div>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -73,8 +87,33 @@ export function ChartLineInsulin() {
           </LineChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        From 10 to 18 units over 19 days; illustrative, not a protocol.
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          {latest.dose >= first.dose ? "Up" : "Down"} from {first.dose} to{" "}
+          {latest.dose} units{" "}
+          {latest.dose < first.dose ? (
+            <IconPlaceholder
+              lucide="TrendingDownIcon"
+              tabler="IconTrendingDown"
+              hugeicons="ChartDownIcon"
+              phosphor="TrendDownIcon"
+              remixicon="RiArrowDownLine"
+              className="size-4"
+            />
+          ) : (
+            <IconPlaceholder
+              lucide="TrendingUpIcon"
+              tabler="IconTrendingUp"
+              hugeicons="ChartUpIcon"
+              phosphor="TrendUpIcon"
+              remixicon="RiArrowUpLine"
+              className="size-4"
+            />
+          )}
+        </div>
+        <div className="leading-none text-muted-foreground">
+          {first.day} to {latest.day}; illustrative, not a protocol
+        </div>
       </CardFooter>
     </Card>
   )

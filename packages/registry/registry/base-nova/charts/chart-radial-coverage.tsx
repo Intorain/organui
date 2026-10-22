@@ -54,6 +54,11 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+const lowest = chartData.reduce((a, b) => (b.coverage < a.coverage ? b : a))
+const others = Math.min(
+  ...chartData.filter((item) => item !== lowest).map(({ coverage }) => coverage)
+)
+
 export function ChartRadialCoverage() {
   return (
     <Card className="flex flex-col">
@@ -75,8 +80,14 @@ export function ChartRadialCoverage() {
           </RadialBarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground">
-        HPV lags the others; illustrative data.
+      <CardFooter className="flex-col gap-2 text-sm">
+        <div className="flex items-center gap-2 leading-none font-medium">
+          {chartConfig[lowest.vaccine as keyof typeof chartConfig].label} lags,
+          at {lowest.coverage}%
+        </div>
+        <div className="leading-none text-muted-foreground">
+          The others reach {others}% or more; illustrative data
+        </div>
       </CardFooter>
     </Card>
   )
