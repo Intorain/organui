@@ -2,9 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { useEffect, useState } from "react"
-import { SearchIcon } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
-import { Kbd, KbdGroup } from "@workspace/ui/components/kbd"
 
 // The dialog, cmdk and the index load on first use, so the header costs
 // pages one button.
@@ -52,14 +50,10 @@ export function CommandMenu() {
         onPointerEnter={loadSearchDialog}
         onFocus={loadSearchDialog}
         aria-keyshortcuts="Meta+K Control+K /"
-        className="size-9 justify-start gap-2 bg-muted/50 px-0 font-normal text-muted-foreground sm:w-48 sm:px-3 lg:w-60"
+        className="relative h-8 w-full justify-start rounded-lg border-none bg-muted pl-3 font-normal text-foreground shadow-none transition-colors hover:bg-muted/50 md:w-48 lg:w-40 xl:w-64 dark:bg-card"
       >
-        <SearchIcon data-icon="inline-start" className="mx-auto sm:mx-0" />
-        <span className="sr-only sm:not-sr-only">Search…</span>
-        <KbdGroup className="ml-auto hidden sm:inline-flex">
-          <Kbd>⌘</Kbd>
-          <Kbd>K</Kbd>
-        </KbdGroup>
+        <span className="hidden xl:inline-flex">Search documentation...</span>
+        <span className="inline-flex xl:hidden">Search...</span>
       </Button>
       {used && <SearchDialog open={open} onOpenChange={setOpen} />}
     </>

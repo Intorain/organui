@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { isProduction, site } from "@/lib/site"
 
 import "./globals.css"
+import { Analytics } from "@/components/analytics"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -18,6 +19,9 @@ export const metadata: Metadata = {
   applicationName: site.name,
   title: { default: site.title, template: "%s — OrganUI" },
   description: site.description,
+  alternates: {
+    types: { "application/rss+xml": [{ url: "/rss.xml", title: "Changelog" }] },
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -64,11 +68,13 @@ export default function RootLayout({
       <body>
         <a
           href="#main"
-          className="sr-only rounded-md bg-background px-3 py-2 text-sm font-medium focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:ring-2 focus:ring-ring"
+          className="sr-only rounded-md bg-background px-3 py-2 text-sm font-medium focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-60 focus:ring-2 focus:ring-ring"
         >
           Skip to content
         </a>
         <ThemeProvider>{children}</ThemeProvider>
+        {/* The script is served only on Vercel deployments. */}
+        {process.env.VERCEL_ENV && <Analytics />}
       </body>
     </html>
   )

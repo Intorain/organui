@@ -1,7 +1,14 @@
 import { ComponentPreview } from "@/components/component-preview"
+import { ComponentInstallation } from "@/components/component-installation"
+import { CodeSnippet } from "@/components/code-snippet"
+import { DocsHeader } from "@/components/docs-header"
+import { DocsHeading } from "@/components/docs-heading"
 import { DocsPager } from "@/components/docs-pager"
+import { PropsTable } from "@/components/props-table"
+import { ComponentExamples } from "@/components/component-examples"
+import { componentExamples } from "@/lib/component-examples"
 import Link from "next/link"
-import { codeBlock, docsMetadata, shadcn } from "@/lib/registry"
+import { docsMetadata, shadcn } from "@/lib/registry"
 import { site } from "@/lib/site"
 
 export const metadata = docsMetadata(
@@ -41,23 +48,18 @@ export function Schedule() {
 export default function Page() {
   return (
     <div className="flex flex-col gap-10">
-      <header className="flex flex-col gap-4">
-        <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
-          Components / Clinical
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight">
-          Medication schedule
-        </h1>
-        <p className="max-w-2xl text-lg text-muted-foreground">
+      <DocsHeader
+        href="/docs/components/medication-schedule"
+        title="Medication schedule"
+      >
+        <p className="text-[1.05rem] text-balance text-muted-foreground sm:text-base md:max-w-[80%]">
           A day of doses on a 24-hour timeline, with a checklist to mark each
           one taken or skipped and warnings for interactions you supply.
         </p>
-      </header>
+      </DocsHeader>
       <ComponentPreview name="medication-schedule-demo" />
       <section className="flex flex-col gap-4">
-        <h2 id="installation" className="text-2xl font-semibold">
-          Installation
-        </h2>
+        <DocsHeading id="installation">Installation</DocsHeading>
         <p>
           In a project set up as in{" "}
           <Link href="/docs/installation" className="underline">
@@ -65,14 +67,10 @@ export default function Page() {
           </Link>
           , run:
         </p>
-        <pre
-          tabIndex={0}
-          role="region"
-          aria-label="Installation command"
-          className={codeBlock}
-        >
-          {`bunx ${shadcn} add ${site.url}/r/medication-schedule.json`}
-        </pre>
+        <ComponentInstallation
+          name="medication-schedule"
+          command={`bunx ${shadcn} add ${site.url}/r/medication-schedule.json`}
+        />
         <p>
           Or by name:{" "}
           <code>bunx {shadcn} add @organui/medication-schedule</code>.
@@ -89,17 +87,8 @@ export default function Page() {
         </a>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="usage" className="text-2xl font-semibold">
-          Usage
-        </h2>
-        <pre
-          tabIndex={0}
-          role="region"
-          aria-label="Data wiring example"
-          className={codeBlock}
-        >
-          {usage}
-        </pre>
+        <DocsHeading id="usage">Usage</DocsHeading>
+        <CodeSnippet label="Data wiring example" code={usage} />
         <p>
           Each medication has a unique <code>id</code>, a <code>name</code> and
           its local dosing <code>times</code> as <code>&quot;HH:MM&quot;</code>.
@@ -117,9 +106,7 @@ export default function Page() {
         </p>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="dose-tracking" className="text-2xl font-semibold">
-          Dose tracking
-        </h2>
+        <DocsHeading id="dose-tracking">Dose tracking</DocsHeading>
         <p>
           Dose status is a map from dose keys, such as{" "}
           <code>levothyroxine@2026-10-19T07:00</code>, to{" "}
@@ -137,9 +124,9 @@ export default function Page() {
         </p>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="interaction-warnings" className="text-2xl font-semibold">
+        <DocsHeading id="interaction-warnings">
           Interaction warnings
-        </h2>
+        </DocsHeading>
         <p>
           The component ships no drug database and makes no clinical judgement.
           It shows only the <code>interactions</code> you pass, each naming two
@@ -158,9 +145,7 @@ export default function Page() {
         </p>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="customize" className="text-2xl font-semibold">
-          Customize
-        </h2>
+        <DocsHeading id="customize">Customize</DocsHeading>
         <p>
           Set <code>label</code> for the accessible name, <code>locale</code>{" "}
           for the date heading, <code>className</code> for the outer container
@@ -171,11 +156,11 @@ export default function Page() {
         </p>
         <p className="text-sm text-muted-foreground">
           A display component, not a medical device. No reminders,
-          notifications, as-needed dosing, titration or dose calculations. Built
-          on shadcn&apos;s Base UI components; compatibility with Radix-based
-          presets is not claimed.
+          notifications, as-needed dosing, titration or dose calculations.
         </p>
       </section>
+      <ComponentExamples examples={componentExamples["medication-schedule"]!} />
+      <PropsTable item="medication-schedule" />
       <DocsPager href="/docs/components/medication-schedule" />
     </div>
   )

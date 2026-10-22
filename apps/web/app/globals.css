@@ -1,4 +1,123 @@
 @import "@workspace/ui/globals.css";
+/* The CSS the utility items install, for their previews. */
+@import "@workspace/registry/utilities.css";
 
 /* The docs render the registry component from its workspace dependency. */
 @source "../node_modules/@workspace/registry/registry";
+
+:root {
+  --header-height: calc(var(--spacing) * 14);
+  /* Code sits on its own surface, as on shadcn/ui's site. */
+  --code: oklch(0.98 0 0);
+  --code-foreground: var(--foreground);
+  /* Blue charts, as on shadcn/ui's site. */
+  --chart-1: var(--color-blue-300);
+  --chart-2: var(--color-blue-500);
+  --chart-3: var(--color-blue-600);
+  --chart-4: var(--color-blue-700);
+  --chart-5: var(--color-blue-800);
+  --selection: oklch(0.145 0 0);
+  --selection-foreground: oklch(1 0 0);
+}
+
+@media (width >= 64rem) {
+  :root {
+    --header-height: calc(var(--spacing) * 16);
+  }
+}
+
+.dark {
+  --code: oklch(0.2 0 0);
+  --code-foreground: oklch(0.708 0 0);
+  --chart-1: var(--color-blue-300);
+  --chart-2: var(--color-blue-500);
+  --chart-3: var(--color-blue-600);
+  --chart-4: var(--color-blue-700);
+  --chart-5: var(--color-blue-800);
+  --selection: oklch(0.922 0 0);
+  --selection-foreground: oklch(0.205 0 0);
+}
+
+@theme inline {
+  --color-code: var(--code);
+  --color-code-foreground: var(--code-foreground);
+}
+
+/* The site's code blocks fill the code surface instead of drawing a border,
+   as shadcn/ui's do. Unlayered, so it wins over the block's own classes. */
+[data-slot="code-block"][data-variant="default"] {
+  border-color: transparent;
+  background-color: var(--color-code);
+}
+
+@layer base {
+  html {
+    /* Anchors land below the sticky header. */
+    scroll-padding-top: calc(var(--header-height) + 1rem);
+    @apply overscroll-y-none;
+  }
+
+  body {
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Taps show on touch screens, which have no hover. */
+  a:active,
+  button:active {
+    @apply opacity-60 md:opacity-100;
+  }
+
+  /* Code reads character by character, so "=>" stays two characters. */
+  code,
+  pre,
+  kbd {
+    font-variant-ligatures: none;
+  }
+
+  ::selection {
+    background-color: var(--selection);
+    color: var(--selection-foreground);
+  }
+
+  /* Text in docs pages: inline code and links. Code blocks, buttons and
+     components style themselves. */
+  [data-docs-content] :where(p, li, td, figcaption, summary) > code {
+    @apply rounded-md bg-muted px-[0.3em] py-[0.15em] font-mono text-[0.85em] break-words text-foreground;
+  }
+
+  [data-docs-content] :where(p, td) > a {
+    @apply font-medium underline decoration-current/30 underline-offset-4 transition-colors hover:decoration-current;
+  }
+
+  /* Keys, styled as shadcn's Kbd. */
+  [data-docs-content] :where(p, li, td) > kbd {
+    @apply inline-flex h-5 min-w-5 items-center justify-center rounded-sm bg-muted px-1 font-sans text-xs font-medium text-muted-foreground;
+  }
+
+  /* Numbers line up in docs tables, such as ranges and versions. */
+  [data-docs-content] table {
+    @apply tabular-nums;
+  }
+}
+
+/* A tap area at least 2rem larger than the control on touch screens. */
+@utility extend-touch-target {
+  @media (pointer: coarse) {
+    @apply relative touch-manipulation after:absolute after:-inset-2;
+  }
+}
+
+/* Numbered steps, such as a component's manual installation. */
+@utility steps {
+  @apply flex flex-col gap-6 [counter-reset:step] md:ms-4 md:border-s md:ps-8;
+
+  & > li {
+    @apply relative flex min-w-0 flex-col gap-3 [counter-increment:step];
+  }
+
+  & > li::before {
+    @apply inline-flex size-7 items-center justify-center rounded-full bg-muted font-mono text-sm font-medium md:absolute md:-ms-[3.15rem] md:size-9 md:border-4 md:border-background;
+    content: counter(step);
+  }
+}

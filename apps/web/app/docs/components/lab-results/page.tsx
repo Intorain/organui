@@ -1,7 +1,14 @@
 import { ComponentPreview } from "@/components/component-preview"
+import { ComponentInstallation } from "@/components/component-installation"
+import { CodeSnippet } from "@/components/code-snippet"
+import { DocsHeader } from "@/components/docs-header"
+import { DocsHeading } from "@/components/docs-heading"
 import { DocsPager } from "@/components/docs-pager"
+import { PropsTable } from "@/components/props-table"
+import { ComponentExamples } from "@/components/component-examples"
+import { componentExamples } from "@/lib/component-examples"
 import Link from "next/link"
-import { codeBlock, docsMetadata, shadcn } from "@/lib/registry"
+import { docsMetadata, shadcn } from "@/lib/registry"
 import { site } from "@/lib/site"
 
 export const metadata = docsMetadata(
@@ -42,24 +49,16 @@ export function Results() {
 export default function Page() {
   return (
     <div className="flex flex-col gap-10">
-      <header className="flex flex-col gap-4">
-        <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
-          Components / Clinical
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight">
-          Lab results table
-        </h1>
-        <p className="max-w-2xl text-lg text-muted-foreground">
+      <DocsHeader href="/docs/components/lab-results" title="Lab results table">
+        <p className="text-[1.05rem] text-balance text-muted-foreground sm:text-base md:max-w-[80%]">
           Lab values flagged against the reference ranges you pass, with a
           sparkline of earlier results. Flags read as text and an icon, so they
           never depend on color alone.
         </p>
-      </header>
+      </DocsHeader>
       <ComponentPreview name="lab-results-demo" />
       <section className="flex flex-col gap-4">
-        <h2 id="installation" className="text-2xl font-semibold">
-          Installation
-        </h2>
+        <DocsHeading id="installation">Installation</DocsHeading>
         <p>
           In a project set up as in{" "}
           <Link href="/docs/installation" className="underline">
@@ -67,14 +66,10 @@ export default function Page() {
           </Link>
           , run:
         </p>
-        <pre
-          tabIndex={0}
-          role="region"
-          aria-label="Installation command"
-          className={codeBlock}
-        >
-          {`bunx ${shadcn} add ${site.url}/r/lab-results.json`}
-        </pre>
+        <ComponentInstallation
+          name="lab-results"
+          command={`bunx ${shadcn} add ${site.url}/r/lab-results.json`}
+        />
         <p>
           Or by name: <code>bunx {shadcn} add @organui/lab-results</code>.
         </p>
@@ -89,22 +84,13 @@ export default function Page() {
         </a>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="usage" className="text-2xl font-semibold">
-          Usage
-        </h2>
-        <pre
-          tabIndex={0}
-          role="region"
-          aria-label="Usage example"
-          className={codeBlock}
-        >
-          {usage}
-        </pre>
+        <DocsHeading id="usage">Usage</DocsHeading>
+        <CodeSnippet label="Usage example" code={usage} />
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="reference-ranges-and-flags" className="text-2xl font-semibold">
+        <DocsHeading id="reference-ranges-and-flags">
           Reference ranges and flags
-        </h2>
+        </DocsHeading>
         <p>
           Ranges are data, not built in, because they vary by laboratory, age,
           sex and method. Pass <code>low</code> and <code>high</code> as the
@@ -131,9 +117,7 @@ export default function Page() {
         </p>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="trend" className="text-2xl font-semibold">
-          Trend
-        </h2>
+        <DocsHeading id="trend">Trend</DocsHeading>
         <p>
           Pass <code>history</code>, including the current result, to draw a
           sparkline. Points are sorted by date. The shaded band is the reference
@@ -151,9 +135,7 @@ export default function Page() {
         </p>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="layout" className="text-2xl font-semibold">
-          Layout
-        </h2>
+        <DocsHeading id="layout">Layout</DocsHeading>
         <p>
           The table sizes to its container rather than the viewport. Below 32rem
           wide, the reference range moves under the test name so the table fits
@@ -165,6 +147,8 @@ export default function Page() {
           example values are illustrative.
         </p>
       </section>
+      <ComponentExamples examples={componentExamples["lab-results"]!} />
+      <PropsTable item="lab-results" />
       <DocsPager href="/docs/components/lab-results" />
     </div>
   )

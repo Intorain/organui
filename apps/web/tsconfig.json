@@ -3,6 +3,49 @@
   "compilerOptions": {
     // Registry blocks import the files they ship where the CLI installs them.
     "paths": {
+      "@/components/ui/ai-disclaimer": [
+        "../../packages/registry/registry/base-nova/ai-disclaimer/ai-disclaimer.tsx"
+      ],
+      "@/components/ui/clinical-citation": [
+        "../../packages/registry/registry/base-nova/clinical-citation/clinical-citation.tsx"
+      ],
+      "@/components/ui/clinical-sources": [
+        "../../packages/registry/registry/base-nova/clinical-sources/clinical-sources.tsx"
+      ],
+      "@/components/ui/differential-list": [
+        "../../packages/registry/registry/base-nova/differential-list/differential-list.tsx"
+      ],
+      "@/components/ui/clinician-review": [
+        "../../packages/registry/registry/base-nova/clinician-review/clinician-review.tsx"
+      ],
+      "@/components/ui/ai-note": [
+        "../../packages/registry/registry/base-nova/ai-note/ai-note.tsx"
+      ],
+      "@/components/ui/ecg-trace": [
+        "../../packages/registry/registry/base-nova/ecg-trace/ecg-trace.tsx"
+      ],
+      "@/components/ui/lab-results": [
+        "../../packages/registry/registry/base-nova/lab-results/lab-results.tsx"
+      ],
+      "@/components/ui/medication-schedule": [
+        "../../packages/registry/registry/base-nova/medication-schedule/medication-schedule.tsx"
+      ],
+      "@/components/ui/vital-signs": [
+        "../../packages/registry/registry/base-nova/vital-signs/vital-signs.tsx"
+      ],
+      "@/lib/age": ["../../packages/registry/registry/base-nova/age/age.ts"],
+      "@/lib/z-scores": [
+        "../../packages/registry/registry/base-nova/z-scores/z-scores.ts"
+      ],
+      "@/lib/reference-ranges": [
+        "../../packages/registry/registry/base-nova/reference-ranges/reference-ranges.ts"
+      ],
+      "@/lib/clinical-units": [
+        "../../packages/registry/registry/base-nova/clinical-units/clinical-units.ts"
+      ],
+      "@/lib/body-measurements": [
+        "../../packages/registry/registry/base-nova/body-measurements/body-measurements.ts"
+      ],
       "@/components/ui/anatomy-tree": [
         "../../packages/registry/registry/base-nova/anatomy-tree/anatomy-tree.tsx"
       ],
@@ -14,6 +57,9 @@
       ],
       "@/components/organ-switcher": [
         "../../packages/registry/registry/base-nova/blocks/explorer-03/components/organ-switcher.tsx"
+      ],
+      "@/components/patient-dashboard": [
+        "../../packages/registry/registry/base-nova/blocks/dashboard-01/components/patient-dashboard.tsx"
       ],
       "@/components/adrenals": [
         "../../packages/registry/registry/base-nova/adrenals/adrenals.tsx"

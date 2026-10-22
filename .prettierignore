@@ -13,3 +13,7 @@ AGENTS.md
 # Vendored agent skills, kept as upstream ships them
 .agents/
 .claude/
+# Generated from registry.json by scripts/utilities-css.ts
+packages/registry/utilities.css
+# Generated from the components by scripts/write-component-api.ts
+packages/registry/component-api.json

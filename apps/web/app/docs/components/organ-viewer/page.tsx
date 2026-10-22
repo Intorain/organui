@@ -1,8 +1,13 @@
 import { ComponentPreview } from "@/components/component-preview"
+import { ComponentInstallation } from "@/components/component-installation"
+import { CodeSnippet } from "@/components/code-snippet"
+import { DocsHeader } from "@/components/docs-header"
+import { DocsHeading } from "@/components/docs-heading"
 import { DocsPager } from "@/components/docs-pager"
+import { PropsTable } from "@/components/props-table"
 import Link from "next/link"
 import { OrganExamples } from "@/components/organ-examples"
-import { codeBlock, docsMetadata, registryItems, shadcn } from "@/lib/registry"
+import { docsMetadata, registryItems, shadcn } from "@/lib/registry"
 import { site } from "@/lib/site"
 
 export const metadata = docsMetadata(
@@ -44,22 +49,16 @@ export default async function Page() {
   const organs = registryItems.filter(({ organ }) => organ)
   return (
     <div className="flex flex-col gap-10">
-      <header className="flex flex-col gap-4">
-        <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
-          Components / Organs
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight">Organ viewer</h1>
-        <p className="max-w-2xl text-lg text-muted-foreground">
+      <DocsHeader href="/docs/components/organ-viewer" title="Organ viewer">
+        <p className="text-[1.05rem] text-balance text-muted-foreground sm:text-base md:max-w-[80%]">
           The 3D stage every OrganUI explorer shares. Give it a GLB and a
           description of its structures; it handles loading, framing, picking
           and emphasis.
         </p>
-      </header>
+      </DocsHeader>
       <ComponentPreview name="organ-viewer-demo" />
       <section className="flex flex-col gap-4">
-        <h2 id="installation" className="text-2xl font-semibold">
-          Installation
-        </h2>
+        <DocsHeading id="installation">Installation</DocsHeading>
         <p>
           Most apps want a ready-made organ:{" "}
           {organs.map((item, index) => (
@@ -72,42 +71,29 @@ export default async function Page() {
           ))}
           . To bring your own model, install the viewer alone.
         </p>
-        <pre
-          tabIndex={0}
-          role="region"
-          aria-label="Installation command"
-          className={codeBlock}
-        >
-          {`bunx ${shadcn} add ${site.url}/r/organ-viewer.json`}
-        </pre>
+        <ComponentInstallation
+          name="organ-viewer"
+          command={`bunx ${shadcn} add ${site.url}/r/organ-viewer.json`}
+        />
         <p className="text-sm text-muted-foreground">
           The source installs into your components directory and adds three.js,
           plus shadcn&apos;s <code>alert</code>, <code>button</code>,{" "}
           <code>progress</code>, <code>select</code> and <code>tooltip</code>{" "}
           for its controls. Its toolbar composes them with Base UI&apos;s{" "}
-          <code>render</code> prop, so it needs{" "}
+          <code>render</code> prop;{" "}
           <Link href="/docs/base-ui" className="underline">
-            one of shadcn&apos;s Base UI styles
-          </Link>
-          , such as <code>base-nova</code>; on a Radix style its buttons do
-          nothing. It uses your theme tokens and installs no global styles.
+            Radix projects
+          </Link>{" "}
+          get a copy built on <code>asChild</code>. It uses your theme tokens
+          and installs no global styles.
         </p>
         <a className="underline" href="/r/organ-viewer.json">
           View registry item JSON
         </a>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="usage" className="text-2xl font-semibold">
-          Usage
-        </h2>
-        <pre
-          tabIndex={0}
-          role="region"
-          aria-label="Model description example"
-          className={codeBlock}
-        >
-          {model}
-        </pre>
+        <DocsHeading id="usage">Usage</DocsHeading>
+        <CodeSnippet label="Model description example" code={model} />
         <p>
           Every structure must exist in the GLB, matched by mesh name or{" "}
           <code>userData.structureId</code> on the mesh or one of its parents;
@@ -119,9 +105,7 @@ export default async function Page() {
       </section>
       <OrganExamples name="organ-viewer" />
       <section className="flex flex-col gap-4">
-        <h2 id="behaviour" className="text-2xl font-semibold">
-          Behaviour
-        </h2>
+        <DocsHeading id="behaviour">Behaviour</DocsHeading>
         <p>
           Selection and visibility are controlled, with the same contract as the
           anatomy tree: pass <code>selectedId</code> and a visibility map where
@@ -140,17 +124,10 @@ export default async function Page() {
         </p>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="control-it-from-your-ui" className="text-2xl font-semibold">
+        <DocsHeading id="control-it-from-your-ui">
           Control it from your UI
-        </h2>
-        <pre
-          tabIndex={0}
-          role="region"
-          aria-label="Imperative handle example"
-          className={codeBlock}
-        >
-          {handle}
-        </pre>
+        </DocsHeading>
+        <CodeSnippet label="Imperative handle example" code={handle} />
         <p>
           Pass <code>controls=&#123;false&#125;</code> to hide the built-in view
           menu, zoom and reset buttons. <code>organAnatomyNodes(model)</code>{" "}
@@ -164,6 +141,7 @@ export default async function Page() {
           such as the anatomy tree alongside it.
         </p>
       </section>
+      <PropsTable item="organ-viewer" />
       <DocsPager href="/docs/components/organ-viewer" />
     </div>
   )

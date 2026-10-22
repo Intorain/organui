@@ -16,9 +16,14 @@ const registry = dirname(
 const server = Bun.serve({
   port: 0,
   hostname: "127.0.0.1",
+  // /styles/radix-*/ serves the Radix build, as the docs site does.
   fetch(request) {
-    const name = new URL(request.url).pathname.split("/").at(-1) ?? ""
-    const file = Bun.file(resolve(registry, name))
+    const path = new URL(request.url).pathname
+    const name = path.split("/").at(-1) ?? ""
+    const directory = path.startsWith("/styles/radix-")
+      ? resolve(registry, "radix")
+      : registry
+    const file = Bun.file(resolve(directory, name))
     if (!/^[a-z0-9-]+\.json$/.test(name))
       return new Response(null, { status: 404 })
     return file
@@ -187,6 +192,7 @@ export default function ImageHarness(){
 // Vite has no file routing, so the CLI skips block pages there; these stand in
 // for them. Next.js serves the installed pages at the same paths.
 const blockHarness = `import { OrganExplorer } from "@/components/organ-explorer"
+import { examplePatient, PatientDashboard } from "@/components/patient-dashboard"
 import { AnatomyWorkspace } from "@/components/anatomy-workspace"
 import { OrganSwitcher } from "@/components/organ-switcher"
 import { heartModel } from "@/components/heart"
@@ -195,17 +201,52 @@ import { pancreasModel } from "@/components/pancreas"
 import { stomachModel } from "@/components/stomach"
 export default function BlockHarness({path}:{path:string}){
  if(path==="/workspace")return <AnatomyWorkspace model={heartModel}/>
+ if(path==="/dashboard")return <PatientDashboard patient={examplePatient}/>
  return <main style={{padding:24}}><h1>{path==="/organs"?"Organs":"Heart"}</h1>{path==="/organs"?<OrganSwitcher models={[heartModel,kidneysModel,stomachModel,pancreasModel]}/>:<OrganExplorer model={heartModel}/>}</main>
 }`
-const blocks = ["explorer-01", "explorer-02", "explorer-03"]
-const pages = ["explorer", "workspace", "organs"]
+// Uses each helper and CSS utility, so the build type-checks the helpers
+// and compiles the classes.
+const utilitiesHarness = `import { formatAge, ageInMonths } from "@/lib/age"
+import { bodyMassIndex } from "@/lib/body-measurements"
+import { convertAnalyte } from "@/lib/clinical-units"
+import { flagValue } from "@/lib/reference-ranges"
+import { lmsZScore } from "@/lib/z-scores"
+export default function UtilitiesHarness(){
+ const z=lmsZScore(10,[0.2,9.4,0.11])
+ return <main className="bg-ecg-grid ecg-grid-color-sky-500"><p className="animate-heartbeat heartbeat-rate-72 text-severity-critical">{formatAge(ageInMonths(new Date("2025-01-01"),new Date("2026-01-01")))} {bodyMassIndex(70,175).toFixed(1)} {convertAnalyte("glucose",100,"conventional","si").toFixed(1)} {flagValue(6.4,{high:5.1})} {z?.toFixed(2)}</p></main>
+}`
+const helpers = [
+  "age",
+  "z-scores",
+  "reference-ranges",
+  "clinical-units",
+  "body-measurements",
+]
+const utilities = [...helpers, "utilities"]
+// Built from shadcn components only, so one copy serves Base UI and Radix;
+// the Radix consumer's build checks that.
+const aiElements = [
+  "ai-disclaimer",
+  "clinical-citation",
+  "clinical-sources",
+  "differential-list",
+  "clinician-review",
+  "ai-note",
+]
+const blocks = ["explorer-01", "explorer-02", "explorer-03", "dashboard-01"]
+const pages = ["explorer", "workspace", "organs", "dashboard"]
 // Deliberately use distinct theme values to detect accidental theme overwrites.
 const css = `@import "tailwindcss";
 @theme inline { --color-background:var(--background);--color-foreground:var(--foreground);--color-muted:var(--muted);--color-muted-foreground:var(--muted-foreground);--color-accent:var(--accent);--color-border:var(--border);--color-ring:var(--ring); }
 :root{--background:#f4f7fb;--foreground:#142d45;--muted:#e5edf4;--muted-foreground:#48627a;--accent:#d7e8f5;--border:#94a9ba;--ring:#225d9b;}body{background:var(--background);color:var(--foreground);font-family:system-ui;}button{cursor:pointer;}`
 try {
-  for (const framework of ["next", "vite"]) {
+  // Radix is a Next.js app on a Radix style, installing every item by name
+  // through a {style} registry URL.
+  for (const framework of ["next", "vite", "radix"]) {
     const dir = resolve(out, framework)
+    const nextjs = framework !== "vite"
+    const byName = framework !== "next"
+    const radix = framework === "radix"
     // Exercise both a different prefix and independent component/UI folders.
     const customAliases = framework === "vite"
     const componentDir = customAliases ? "src/widgets" : "src/components"
@@ -226,17 +267,17 @@ try {
       "react-dom": "19.2.4",
       tailwindcss: "4.2.2",
       "@tailwindcss/postcss": "4.2.2",
-      ...(framework === "next" ? { next: "16.3.3" } : { vite: "7.3.1" }),
+      ...(nextjs ? { next: "16.3.3" } : { vite: "7.3.1" }),
     }
     await put(dir, "package.json", {
       name: `anatomy-consumer-${framework}`,
       private: true,
       type: "module",
       scripts: {
-        build:
-          framework === "next" ? "next build" : "tsc --noEmit && vite build",
-        start:
-          framework === "next"
+        build: nextjs ? "next build" : "tsc --noEmit && vite build",
+        start: radix
+          ? "next start --port 4320"
+          : nextjs
             ? "next start --port 4318"
             : "vite preview --host 127.0.0.1 --port 4319 --strictPort",
       },
@@ -262,14 +303,14 @@ try {
         allowJs: true,
         resolveJsonModule: true,
         paths: { [customAliases ? "~/*" : "@/*"]: ["./src/*"] },
-        ...(framework === "next" ? { plugins: [{ name: "next" }] } : {}),
+        ...(nextjs ? { plugins: [{ name: "next" }] } : {}),
       },
       include: ["src", "next-env.d.ts", ".next/types/**/*.ts"],
     })
     await put(dir, "components.json", {
       $schema: "https://ui.shadcn.com/schema.json",
-      style: "base-nova",
-      rsc: framework === "next",
+      style: radix ? "radix-nova" : "base-nova",
+      rsc: nextjs,
       tsx: true,
       tailwind: {
         config: "",
@@ -279,7 +320,9 @@ try {
       },
       iconLibrary: "lucide",
       registries: {
-        "@organui": `http://127.0.0.1:${server.port}/{name}.json`,
+        "@organui": radix
+          ? `http://127.0.0.1:${server.port}/styles/{style}/{name}.json`
+          : `http://127.0.0.1:${server.port}/{name}.json`,
       },
       aliases: customAliases
         ? {
@@ -333,7 +376,7 @@ try {
         fileURLToPath(import.meta.resolve("web/public/models/crambin.pdb"))
       )
     )
-    if (framework === "next") {
+    if (nextjs) {
       await put(dir, "src/app/page.tsx", 'export {default} from "../harness"')
       await put(
         dir,
@@ -400,7 +443,7 @@ try {
       await put(
         dir,
         "src/main.tsx",
-        'import React from "react";import {createRoot} from "react-dom/client";import Harness from "./harness";import OrganHarness from "./organ-harness";import MoleculeHarness from "./molecule-harness";import EcgHarness from "./ecg-harness";import GrowthHarness from "./growth-harness";import BodyMapHarness from "./body-map-harness";import DermatomeHarness from "./dermatome-harness";import BlockHarness from "./block-harness";import LabHarness from "./lab-harness";import MedicationHarness from "./medication-harness";import VitalsHarness from "./vitals-harness";import ImageHarness from "./image-harness";import "./globals.css";const path=location.pathname;createRoot(document.getElementById("root")!).render(path==="/organ"?<OrganHarness/>:path==="/ecg"?<EcgHarness/>:path==="/growth"?<GrowthHarness/>:path==="/body-map"?<BodyMapHarness/>:path==="/dermatome"?<DermatomeHarness/>:path==="/molecule"?<MoleculeHarness/>:path==="/lab"?<LabHarness/>:path==="/medication"?<MedicationHarness/>:path==="/vitals"?<VitalsHarness/>:path==="/image"?<ImageHarness/>:["/explorer","/workspace","/organs"].includes(path)?<BlockHarness path={path}/>:<Harness/>);'
+        'import React from "react";import {createRoot} from "react-dom/client";import Harness from "./harness";import OrganHarness from "./organ-harness";import MoleculeHarness from "./molecule-harness";import EcgHarness from "./ecg-harness";import GrowthHarness from "./growth-harness";import BodyMapHarness from "./body-map-harness";import DermatomeHarness from "./dermatome-harness";import BlockHarness from "./block-harness";import LabHarness from "./lab-harness";import MedicationHarness from "./medication-harness";import VitalsHarness from "./vitals-harness";import ImageHarness from "./image-harness";import "./globals.css";const path=location.pathname;createRoot(document.getElementById("root")!).render(path==="/organ"?<OrganHarness/>:path==="/ecg"?<EcgHarness/>:path==="/growth"?<GrowthHarness/>:path==="/body-map"?<BodyMapHarness/>:path==="/dermatome"?<DermatomeHarness/>:path==="/molecule"?<MoleculeHarness/>:path==="/lab"?<LabHarness/>:path==="/medication"?<MedicationHarness/>:path==="/vitals"?<VitalsHarness/>:path==="/image"?<ImageHarness/>:["/explorer","/workspace","/organs","/dashboard"].includes(path)?<BlockHarness path={path}/>:<Harness/>);'
       )
       await put(dir, "src/block-harness.tsx", source(blockHarness))
       await put(
@@ -416,7 +459,7 @@ try {
         shadcn,
         "add",
         // Vite exercises the documented namespace; Next installs by URL.
-        framework === "vite"
+        byName
           ? "@organui/anatomy-tree"
           : `http://127.0.0.1:${server.port}/anatomy-tree.json`,
         "--yes",
@@ -428,7 +471,7 @@ try {
         "node",
         shadcn,
         "add",
-        framework === "vite"
+        byName
           ? "@organui/heart"
           : `http://127.0.0.1:${server.port}/heart.json`,
         "--yes",
@@ -447,7 +490,7 @@ try {
         "node",
         shadcn,
         "add",
-        framework === "vite"
+        byName
           ? "@organui/brain"
           : `http://127.0.0.1:${server.port}/brain.json`,
         "--yes",
@@ -481,7 +524,7 @@ try {
         shadcn,
         "add",
         ...organs.map(({ name }) =>
-          framework === "vite"
+          byName
             ? `@organui/${name}`
             : `http://127.0.0.1:${server.port}/${name}.json`
         ),
@@ -511,7 +554,7 @@ try {
         "node",
         shadcn,
         "add",
-        framework === "vite"
+        byName
           ? "@organui/lab-results"
           : `http://127.0.0.1:${server.port}/lab-results.json`,
         "--yes",
@@ -523,7 +566,7 @@ try {
         "node",
         shadcn,
         "add",
-        framework === "vite"
+        byName
           ? "@organui/medication-schedule"
           : `http://127.0.0.1:${server.port}/medication-schedule.json`,
         "--yes",
@@ -547,8 +590,8 @@ try {
           "node",
           shadcn,
           "add",
-          ...(framework === "vite"
-            ? [`@organui/${item}`, "--overwrite"]
+          ...(byName
+            ? [`@organui/${item}`, ...(radix ? [] : ["--overwrite"])]
             : [`http://127.0.0.1:${server.port}/${item}.json`]),
           "--yes",
         ],
@@ -563,8 +606,8 @@ try {
           "node",
           shadcn,
           "add",
-          ...(framework === "vite"
-            ? [`@organui/${block}`, "--overwrite"]
+          ...(byName
+            ? [`@organui/${block}`, ...(radix ? [] : ["--overwrite"])]
             : [`http://127.0.0.1:${server.port}/${block}.json`]),
           "--yes",
         ],
@@ -575,7 +618,7 @@ try {
       const installed = await Bun.file(
         resolve(dir, `src/app/${page}/page.tsx`)
       ).exists()
-      if (installed !== (framework === "next"))
+      if (installed !== nextjs)
         throw new Error(`Unexpected ${page} page in ${framework}`)
     }
     for (const name of ["organ-viewer", "molecule-viewer", "dna-helix"]) {
@@ -586,7 +629,8 @@ try {
       if (
         viewer.includes("@workspace/") ||
         (customAliases && viewer.includes('from "@/')) ||
-        (framework === "next" && !viewer.includes('"use client"'))
+        (nextjs && !viewer.includes('"use client"')) ||
+        (radix && viewer.includes("render={"))
       )
         throw new Error(`Invalid installed ${name}`)
     }
@@ -606,7 +650,8 @@ try {
       if (
         installed.includes("@workspace/") ||
         (customAliases && installed.includes('from "@/')) ||
-        (framework === "next" && !installed.includes('"use client"'))
+        (nextjs && !installed.includes('"use client"')) ||
+        (radix && installed.includes("@base-ui/react"))
       )
         throw new Error(`Invalid installed ${name} source`)
     }
@@ -630,6 +675,106 @@ try {
       throw new Error("Invalid installed vital signs")
     if ((await readFile(resolve(dir, "src/globals.css"), "utf8")) !== css)
       throw new Error("Consumer theme modified")
+    // Utilities: helpers install in lib; CSS utilities add to the CSS file
+    // and keep the consumer's theme. The growth chart and lab results
+    // installed the helpers they use above.
+    await run(
+      [
+        "node",
+        shadcn,
+        "add",
+        ...utilities.map((name) =>
+          byName
+            ? `@organui/${name}`
+            : `http://127.0.0.1:${server.port}/${name}.json`
+        ),
+        "--yes",
+      ],
+      dir
+    )
+    const libDir = customAliases ? "src/support" : "src/lib"
+    for (const name of helpers)
+      if (!(await Bun.file(resolve(dir, libDir, `${name}.ts`)).exists()))
+        throw new Error(`The ${name} helper was not installed`)
+    const growth = await readFile(
+      resolve(dir, `${uiDir}/growth-chart.tsx`),
+      "utf8"
+    )
+    if (
+      !growth.includes(customAliases ? "~/support/z-scores" : "@/lib/z-scores")
+    )
+      throw new Error("The growth chart doesn't import the z-scores helper")
+    const styles = await readFile(resolve(dir, "src/globals.css"), "utf8")
+    for (const rule of [
+      "@utility animate-heartbeat",
+      "@utility bg-ecg-grid",
+      "--severity-critical",
+      "--color-severity-critical",
+    ])
+      if (!styles.includes(rule)) throw new Error(`Missing ${rule} in CSS`)
+    if (!styles.includes("--background:#f4f7fb"))
+      throw new Error("Consumer theme modified by a utility")
+    await run(
+      [
+        "node",
+        shadcn,
+        "add",
+        ...aiElements.map((name) =>
+          byName
+            ? `@organui/${name}`
+            : `http://127.0.0.1:${server.port}/${name}.json`
+        ),
+        ...(framework === "vite" ? ["--overwrite"] : []),
+        "--yes",
+      ],
+      dir
+    )
+    // Charts install as blocks, with shadcn's chart and card.
+    const charts = catalog.items
+      .filter(
+        (item) => "categories" in item && item.categories?.includes("charts")
+      )
+      .map(({ name }) => name)
+    await run(
+      [
+        "node",
+        shadcn,
+        "add",
+        ...charts.map((name) =>
+          byName
+            ? `@organui/${name}`
+            : `http://127.0.0.1:${server.port}/${name}.json`
+        ),
+        ...(framework === "vite" ? ["--overwrite"] : []),
+        "--yes",
+      ],
+      dir
+    )
+    for (const name of charts)
+      if (
+        !(await Bun.file(resolve(dir, `${componentDir}/${name}.tsx`)).exists())
+      )
+        throw new Error(`The ${name} chart was not installed`)
+    for (const name of aiElements) {
+      const installed = await readFile(
+        resolve(dir, `${uiDir}/${name}.tsx`),
+        "utf8"
+      )
+      if (
+        installed.includes("@workspace/") ||
+        (customAliases && installed.includes('from "@/'))
+      )
+        throw new Error(`Invalid installed ${name}`)
+    }
+    // Helpers install in the lib alias, ~/support in the Vite consumer.
+    await put(
+      dir,
+      "src/utilities-harness.tsx",
+      utilitiesHarness.replaceAll(
+        "@/lib/",
+        customAliases ? "~/support/" : "@/lib/"
+      )
+    )
     await run(["bun", "run", "build"], dir)
   }
   await githubConsumer(resolve(out, "github"), shadcn)

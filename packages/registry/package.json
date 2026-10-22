@@ -1,6 +1,6 @@
 {
   "name": "@workspace/registry",
-  "version": "0.0.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -17,7 +17,22 @@
     "./molecule-viewer": "./registry/base-nova/molecule-viewer/molecule-viewer.tsx",
     "./dna-helix": "./registry/base-nova/dna-helix/dna-helix.tsx",
     "./blocks/*": "./registry/base-nova/blocks/*.tsx",
+    "./charts/*": "./registry/base-nova/charts/*.tsx",
     "./registry.json": "./registry.json",
+    "./ai-disclaimer": "./registry/base-nova/ai-disclaimer/ai-disclaimer.tsx",
+    "./clinical-citation": "./registry/base-nova/clinical-citation/clinical-citation.tsx",
+    "./clinical-sources": "./registry/base-nova/clinical-sources/clinical-sources.tsx",
+    "./differential-list": "./registry/base-nova/differential-list/differential-list.tsx",
+    "./clinician-review": "./registry/base-nova/clinician-review/clinician-review.tsx",
+    "./ai-note": "./registry/base-nova/ai-note/ai-note.tsx",
+    "./age": "./registry/base-nova/age/age.ts",
+    "./z-scores": "./registry/base-nova/z-scores/z-scores.ts",
+    "./reference-ranges": "./registry/base-nova/reference-ranges/reference-ranges.ts",
+    "./clinical-units": "./registry/base-nova/clinical-units/clinical-units.ts",
+    "./body-measurements": "./registry/base-nova/body-measurements/body-measurements.ts",
+    "./utilities-css": "./scripts/utilities-css.ts",
+    "./utilities.css": "./utilities.css",
+    "./component-api.json": "./component-api.json",
     "./body-systems.json": "./body-systems.json",
     "./dist/*": "./dist/*",
     "./organ-viewer": "./registry/base-nova/organ-viewer/organ-viewer.tsx",
@@ -68,13 +83,16 @@
   "scripts": {
     "build": "bun scripts/build.ts",
     "lint": "eslint registry --max-warnings=0",
-    "typecheck": "tsc --noEmit",
+    "utilities-css": "bun scripts/write-utilities-css.ts",
+    "component-api": "bun scripts/write-component-api.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.radix.json",
     "test": "bun test tests"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.0",
+    "recharts": "3.10.1",
     "three": "^0.186.1"
   },
   "peerDependencies": {
@@ -94,6 +112,7 @@
     "@workspace/typescript-config": "workspace:*",
     "eslint": "^9.39.5",
     "lucide-react": "1.47.0",
+    "radix-ui": "1.4.3",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "shadcn": "4.22.1",

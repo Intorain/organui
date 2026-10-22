@@ -25,8 +25,12 @@ export function ComponentPreviewTabs({
 }) {
   const [isMobileCodeVisible, setIsMobileCodeVisible] = React.useState(false)
   const codeRef = React.useRef<HTMLDivElement>(null)
+  const toggled = React.useRef(false)
+  // After either button, focus what replaced it: the code, or View Code.
   React.useEffect(() => {
+    if (!toggled.current) return
     if (isMobileCodeVisible) codeRef.current?.querySelector("pre")?.focus()
+    else codeRef.current?.querySelector("button")?.focus()
   }, [isMobileCodeVisible])
 
   return (
@@ -55,21 +59,40 @@ export function ComponentPreviewTabs({
           ref={codeRef}
           data-slot="code"
           data-mobile-code-visible={isMobileCodeVisible}
-          className="relative min-w-0 overflow-hidden [&_pre]:max-h-72"
+          className="relative min-w-0 overflow-hidden border-t [&_pre]:max-h-72"
         >
           {isMobileCodeVisible ? (
-            source
+            <>
+              {source}
+              <div className="bg-code flex justify-center border-t p-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    toggled.current = true
+                    setIsMobileCodeVisible(false)
+                  }}
+                >
+                  Hide Code
+                </Button>
+              </div>
+            </>
           ) : (
             <div className="relative">
               <div aria-hidden="true" className="pointer-events-none">
                 {sourcePreview}
               </div>
-              <div className="absolute inset-0 flex items-center justify-center bg-linear-to-t from-background via-background/70 to-transparent">
+              <div className="from-code via-code/60 absolute inset-0 flex items-center justify-center bg-linear-to-t to-transparent pb-4">
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => setIsMobileCodeVisible(true)}
+                  className="rounded-lg bg-background text-foreground shadow-none hover:bg-muted dark:bg-background dark:text-foreground dark:hover:bg-muted"
+                  onClick={() => {
+                    toggled.current = true
+                    setIsMobileCodeVisible(true)
+                  }}
                 >
                   View Code
                 </Button>

@@ -16,12 +16,14 @@ test("documentation interaction, styling and registry serving", async ({
     if (message.type() === "error") errors.push(message.text())
   })
   await page.goto("/docs/components/anatomy-tree")
+  // The main demo; the examples below it have their own.
+  const demo = page.locator('[data-example="anatomy-tree-demo"]')
   await expect(
     page.getByRole("heading", { name: "Anatomy tree", exact: true })
   ).toBeVisible()
-  const heart = page.getByRole("treeitem", { name: /^Heart, / })
+  const heart = demo.getByRole("treeitem", { name: /^Heart, / })
   await expect(heart).toHaveCSS("display", "flex")
-  await page.getByRole("searchbox").focus()
+  await demo.getByRole("searchbox").focus()
   await page.keyboard.press("Tab")
   await expect(heart).toBeFocused()
   expect(
@@ -31,11 +33,11 @@ test("documentation interaction, styling and registry serving", async ({
   ).toBeGreaterThan(0)
   await page.keyboard.press("Space")
   await expect(heart).toHaveAttribute("aria-checked", "false")
-  await page.getByRole("searchbox").fill("ventricle")
-  await page
+  await demo.getByRole("searchbox").fill("ventricle")
+  await demo
     .getByRole("button", { name: "Left ventricle", exact: true })
     .click()
-  await expect(page.getByRole("status")).toHaveText("Selected: lv")
+  await expect(demo.getByRole("status")).toHaveText("Selected: lv")
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth
@@ -93,13 +95,15 @@ test("accessibility scan covers expanded, mixed and filtered states", async ({
   page,
 }, info) => {
   await page.goto("/docs/components/anatomy-tree")
+  // The main demo; the examples below it have their own.
+  const demo = page.locator('[data-example="anatomy-tree-demo"]')
   for (const state of ["expanded", "mixed", "filtered"]) {
     if (state === "mixed")
-      await page
+      await demo
         .getByRole("button", { name: "Visible: hide Left atrium", exact: true })
         .click()
     if (state === "filtered")
-      await page.getByRole("searchbox").fill("ventricle")
+      await demo.getByRole("searchbox").fill("ventricle")
     const result = await new AxeBuilder({ page }).analyze()
     await info.attach(`axe-${state}`, {
       body: JSON.stringify(result, null, 2),
@@ -107,6 +111,31 @@ test("accessibility scan covers expanded, mixed and filtered states", async ({
     })
     expect(result.violations).toEqual([])
   }
+})
+
+test("docs are served as Markdown and listed in llms.txt and RSS", async ({
+  request,
+}) => {
+  const index = await request.get("/llms.txt")
+  expect(index.ok()).toBe(true)
+  expect(await index.text()).toContain(
+    "(https://organui.com/docs/components/ecg-trace.md)"
+  )
+  const page = await request.get("/docs/components/ecg-trace.md")
+  expect(page.headers()["content-type"]).toContain("text/markdown")
+  const markdown = await page.text()
+  expect(markdown.startsWith("# ECG trace\n")).toBe(true)
+  expect(markdown).toContain("## Installation")
+  expect(markdown).toContain(
+    "bunx shadcn@4.22.1 add https://organui.com/r/ecg-trace.json"
+  )
+  // Previews and controls stay out.
+  expect(markdown).not.toContain("View Code")
+  expect((await request.get("/docs.md")).ok()).toBe(true)
+  expect((await request.get("/docs/not-a-page.md")).status()).toBe(404)
+  const feed = await request.get("/rss.xml")
+  expect(feed.headers()["content-type"]).toContain("application/rss+xml")
+  expect(await feed.text()).toContain("<title>OrganUI changelog</title>")
 })
 
 test("homepage explorer links support keyboard navigation without overflow", async ({
@@ -182,15 +211,25 @@ test("homepage explorer links support keyboard navigation without overflow", asy
 test("guides and the component index pass an accessibility scan without overflow", async ({
   page,
 }, info) => {
+  // A scan per guide, a dozen of them.
+  test.setTimeout(90_000)
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
   for (const [path, title] of [
     ["/docs", "Introduction"],
     ["/docs/installation", "Installation"],
     ["/docs/theming", "Theming"],
-    ["/docs/base-ui", "Base UI"],
+    ["/docs/base-ui", "Base UI and Radix"],
+    ["/docs/forms", "Forms"],
     ["/docs/licences", "Licences"],
+    ["/docs/mcp", "MCP"],
+    ["/docs/changelog", "Changelog"],
+    ["/docs/installation/next", "Next.js"],
+    ["/docs/installation/vite", "Vite"],
     ["/docs/components", "Components"],
+    ["/docs/utilities", "Utilities"],
+    ["/docs/helpers", "Helpers"],
+    ["/docs/ai-elements", "AI Elements"],
   ] as const) {
     await page.goto(path)
     await expect(
@@ -208,6 +247,33 @@ test("guides and the component index pass an accessibility scan without overflow
   expect(errors).toEqual([])
 })
 
+test("the forms guide validates the body map with React Hook Form", async ({
+  page,
+}) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  await page.goto("/docs/forms")
+  const form = page.locator('[data-example="form-rhf-demo"]')
+  await form.getByRole("button", { name: "Submit" }).click()
+  await expect(form.getByText("Select at least one region.")).toBeVisible()
+  await expect(form.getByLabel("Main complaint")).toHaveAttribute(
+    "aria-invalid",
+    "true"
+  )
+
+  await form.getByLabel("Main complaint").fill("Knee pain")
+  await form
+    .getByRole("group", { name: "Front of body" })
+    .getByRole("checkbox", { name: "Right knee" })
+    .click()
+  await expect(form.getByText("Select at least one region.")).toHaveCount(0)
+  await form.getByRole("button", { name: "Submit" }).click()
+  await expect(
+    form.getByRole("status", { name: "Submitted values" })
+  ).toContainText('"right-knee"')
+  expect(errors).toEqual([])
+})
+
 test("component index lists every component inside the docs layout", async ({
   page,
   request,
@@ -221,9 +287,14 @@ test("component index lists every component inside the docs layout", async ({
   await expect(
     page.getByRole("heading", { name: "Components", level: 1 })
   ).toBeVisible()
-  // Blocks are listed on /blocks.
+  // Blocks are listed on /blocks, AI Elements and utilities on their own
+  // pages.
   const components = catalog.items.filter(
-    ({ type }) => type !== "registry:block"
+    ({ type, categories }) =>
+      type !== "registry:block" &&
+      !categories?.includes("utility") &&
+      !categories?.includes("helper") &&
+      !categories?.includes("ai")
   )
   const organs = components.filter(({ categories }) =>
     categories?.includes("organ")
@@ -261,21 +332,11 @@ test("component index lists every component inside the docs layout", async ({
   await expect(
     docs.getByRole("link", { name: "Components", exact: true })
   ).toHaveAttribute("aria-current", "page")
-  // The sidebar lists every component except the organs, which are one link.
-  for (const item of components) {
-    const link = docs.getByRole("link", {
-      name: item.title ?? item.name,
-      exact: true,
-    })
-    if (organs.includes(item)) await expect(link).toHaveCount(0)
-    else
-      await expect(link).toHaveAttribute(
-        "href",
-        `/docs/components/${item.name}`
-      )
-  }
-  // The header's Organs link opens the gallery, so the sidebar has none.
-  await expect(docs.getByRole("link", { name: /organs/i })).toHaveCount(0)
+  // The sidebar lists every component, the organs among them.
+  for (const item of components)
+    await expect(
+      docs.getByRole("link", { name: item.title ?? item.name, exact: true })
+    ).toHaveAttribute("href", `/docs/components/${item.name}`)
   if (narrow) {
     // Tapping the current page still closes the menu.
     await docs.getByRole("link", { name: "Components", exact: true }).click()
@@ -296,6 +357,14 @@ test("component index lists every component inside the docs layout", async ({
   await expect(
     docs.getByRole("link", { name: "Anatomy tree" })
   ).toHaveAttribute("aria-current", "page")
+
+  // An organ's own page is current in the sidebar.
+  const [organ] = organs
+  await page.goto(`/docs/components/${organ!.name}`)
+  if (narrow) await menu.click()
+  await expect(
+    docs.getByRole("link", { name: organ!.title ?? organ!.name, exact: true })
+  ).toHaveAttribute("aria-current", "page")
   expect(errors).toEqual([])
 })
 
@@ -304,8 +373,15 @@ test("old component addresses redirect permanently", async ({ request }) => {
   const catalog = registrySchema.parse(
     await (await request.get("/r/registry.json")).json()
   )
-  for (const { name, type } of catalog.items) {
-    if (type === "registry:block") continue
+  for (const { name, type, categories } of catalog.items) {
+    // Only components had those addresses.
+    if (
+      type === "registry:block" ||
+      ["ai", "helper", "utility"].some((category) =>
+        categories?.includes(category)
+      )
+    )
+      continue
     const response = await request.get(`/docs/${name}`, { maxRedirects: 0 })
     expect(response.status()).toBe(308)
     expect(
@@ -339,6 +415,8 @@ test("the header links each section and searches the whole site", async ({
     "Components",
     "Organs",
     "Blocks",
+    "Charts",
+    "Create",
   ])
   await main.getByRole("link", { name: "Organs", exact: true }).click()
   await expect(page).toHaveURL(/\/docs\/components\/organs$/)
@@ -386,9 +464,12 @@ test("the header links each section and searches the whole site", async ({
     page.getByRole("heading", { name: "Vital signs", level: 1 })
   ).toBeVisible()
 
-  await page.getByRole("button", { name: /^Search…/ }).click()
-  await expect(dialog).toBeVisible()
-  await page.keyboard.press("Escape")
+  // As on shadcn/ui, phones search from the keyboard shortcut only.
+  if (!narrow) {
+    await page.getByRole("button", { name: /^Search/ }).click()
+    await expect(dialog).toBeVisible()
+    await page.keyboard.press("Escape")
+  }
   await expect(dialog).toBeHidden()
   expect(indexRequests).toBe(1)
 
@@ -413,9 +494,6 @@ test("the organs gallery shows every organ as a picture and a link", async ({
   await page.goto("/docs/components/organs")
   await expect(
     page.getByRole("heading", { name: "Organs", level: 1 })
-  ).toBeVisible()
-  await expect(
-    page.getByText("Components / Organs", { exact: true })
   ).toBeVisible()
   const main = page.getByRole("main")
   // One grid, A to Z, with no sections to list beside it.
@@ -625,7 +703,11 @@ test("blocks gallery previews and installs every block", async ({
   )
   const blocks = registrySchema
     .parse(await (await request.get("/r/registry.json")).json())
-    .items.filter(({ type }) => type === "registry:block")
+    // Charts are blocks too, shown on /charts.
+    .items.filter(
+      ({ type, categories }) =>
+        type === "registry:block" && !categories?.includes("charts")
+    )
   expect(blocks.length).toBeGreaterThan(0)
   await page.goto("/docs")
   if ((page.viewportSize()?.width ?? 0) < 768)
@@ -643,20 +725,28 @@ test("blocks gallery previews and installs every block", async ({
     const section = page.getByRole("region", { name: title, exact: true })
     await expect(section).toHaveAttribute("id", block.name)
     await expect(
-      section.getByRole("region", { name: `Install ${title}`, exact: true })
-    ).toHaveText(`bunx shadcn@4.22.1 add @organui/${block.name}`)
-    const preview = section.getByTitle(`${title} preview`)
-    await preview.scrollIntoViewIfNeeded()
-    await expect(
-      preview.contentFrame().getByRole("toolbar", { name: "View controls" })
+      section.getByRole("button", {
+        name: `bunx shadcn@4.22.1 add @organui/${block.name}`,
+        exact: true,
+      })
     ).toBeVisible()
+    // Wide screens frame the page; phones show a picture of it.
+    if ((page.viewportSize()?.width ?? 0) >= 1024) {
+      const preview = section.getByTitle(`${title} preview`)
+      await preview.scrollIntoViewIfNeeded()
+      await expect(preview.contentFrame().getByRole("main")).toBeVisible()
+    } else
+      await expect(
+        section.getByRole("img", { name: `${title} preview`, exact: true })
+      ).toBeVisible()
     const item = registryItemSchema.parse(
       await (await request.get(`/r/${block.name}.json`)).json()
     )
     const installedPage = item.files?.find(
       ({ type }) => type === "registry:page"
     )
-    // The gallery shows each block's own files and links the items it uses.
+    // The code view lists the block's own files and links the items it uses.
+    await section.getByRole("tab", { name: "Code", exact: true }).click()
     for (const dependency of item.registryDependencies ?? [])
       if (dependency.startsWith("@organui/"))
         await expect(
@@ -669,7 +759,7 @@ test("blocks gallery previews and installs every block", async ({
           `/docs/components/${dependency.replace("@organui/", "")}`
         )
     await section
-      .getByText(installedPage?.target ?? "", { exact: true })
+      .getByRole("button", { name: installedPage?.target ?? "", exact: true })
       .click()
     await expect(
       section.getByRole("region", { name: `${installedPage?.target} source` })
@@ -810,7 +900,10 @@ test("lab results flag values in words and fit a phone", async ({
   const item = registryItemSchema.parse(
     await (await request.get("/r/lab-results.json")).json()
   )
-  expect(item.registryDependencies).toEqual(["table"])
+  expect(item.registryDependencies).toEqual([
+    "table",
+    "@organui/reference-ranges",
+  ])
   expect(item.files?.[0]?.content).toBe(
     await readFile(
       new URL(import.meta.resolve("@workspace/registry/lab-results")),
@@ -951,16 +1044,17 @@ test("tree, sequence field and option groups remain usable in dark mode", async 
     await page.goto(`/docs/components/${name}`)
     await expect(page.locator("html")).toHaveClass(/dark/)
     if (name === "anatomy-tree") {
-      await page.getByRole("searchbox").fill("no such structure")
-      await expect(page.getByRole("status").first()).toContainText(
+      const demo = page.locator('[data-example="anatomy-tree-demo"]')
+      await demo.getByRole("searchbox").fill("no such structure")
+      await expect(demo.getByRole("status").first()).toContainText(
         "No matching anatomy."
       )
-      await page.getByRole("searchbox").fill("")
+      await demo.getByRole("searchbox").fill("")
       // Filtering is deferred. Wait for the tree's tab stop to return before
       // pressing Tab, otherwise a slower render legitimately skips the tree.
-      await expect(page.getByRole("treeitem")).toHaveCount(7)
-      await page.getByRole("searchbox").press("Tab")
-      const heart = page.getByRole("treeitem", { name: /^Heart, / })
+      await expect(demo.getByRole("treeitem")).toHaveCount(7)
+      await demo.getByRole("searchbox").press("Tab")
+      const heart = demo.getByRole("treeitem", { name: /^Heart, / })
       await expect(heart).toBeFocused()
       await heart.press("Enter")
       await expect(heart).toHaveAttribute("aria-selected", "true")
@@ -1048,6 +1142,8 @@ test("image viewer docs scroll slices, window and read DICOM files", async ({
     if (message.type() === "error") errors.push(message.text())
   })
   await page.goto("/docs/components/image-viewer")
+  // The main demo; the examples below it have their own.
+  const demo = page.locator('[data-example="image-viewer-demo"]')
   const state = page.getByRole("status").filter({ hasText: "Slice" })
   await expect(state).toHaveText("Slice 16 of 32 · Window 80 / level 40")
   const stage = page.getByRole("region", { name: "Head phantom" })
@@ -1058,11 +1154,11 @@ test("image viewer docs scroll slices, window and read DICOM files", async ({
   await page.keyboard.press("ArrowDown")
   await page.keyboard.press("End")
   await expect(state).toContainText("Slice 32 of 32")
-  const slider = page.getByRole("slider", { name: "Slice" })
+  const slider = demo.getByRole("slider", { name: "Slice" })
   await slider.focus()
   await page.keyboard.press("Home")
   await expect(state).toContainText("Slice 1 of 32")
-  await page.getByRole("combobox", { name: "Window preset" }).click()
+  await demo.getByRole("combobox", { name: "Window preset" }).click()
   await page.getByRole("option", { name: "Bone" }).click()
   await expect(state).toContainText("Window 1800 / level 400")
   // Dragging right widens the window and down raises the level.
@@ -1078,7 +1174,7 @@ test("image viewer docs scroll slices, window and read DICOM files", async ({
   )
   await page.mouse.up()
   await expect(
-    page.getByRole("combobox", { name: "Window preset" })
+    demo.getByRole("combobox", { name: "Window preset" })
   ).toContainText("Custom")
   const [width, level] = (await state.textContent())!
     .match(/Window (\d+) \/ level (\d+)/)!
@@ -1127,5 +1223,303 @@ test("image viewer docs scroll slices, window and read DICOM files", async ({
     path: info.outputPath("image-viewer.png"),
     fullPage: true,
   })
+  expect(errors).toEqual([])
+})
+
+test("component pages switch library, and each library gets its own build", async ({
+  page,
+  request,
+}) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  // A {style} registry URL picks the build for the project's library.
+  const base = await (
+    await request.get("/r/styles/base-nova/organ-viewer.json")
+  ).json()
+  const radix = await (
+    await request.get("/r/styles/radix-nova/organ-viewer.json")
+  ).json()
+  expect(base.files[0].content).toContain("render={")
+  expect(radix.files[0].content).toContain("asChild")
+  expect(radix.files[0].content).not.toContain("render={")
+
+  await page.goto("/docs/components/organ-viewer")
+  const library = page.getByRole("group", { name: "Primitive library" })
+  const command = page.getByRole("region", { name: "Installation command" })
+  await expect(
+    library.getByRole("button", { name: "Base UI" })
+  ).toHaveAttribute("aria-pressed", "true")
+  // The viewer depends on no OrganUI item, so it installs by address.
+  await expect(command).toContainText("/r/organ-viewer.json")
+  await expect(
+    page.getByRole("region", { name: "Registry namespace configuration" })
+  ).toHaveCount(0)
+
+  await library.getByRole("button", { name: "Radix UI" }).click()
+  await expect(
+    page.getByRole("region", { name: "Registry namespace configuration" })
+  ).toContainText("/r/styles/{style}/{name}.json")
+  await page.getByRole("tab", { name: "Manual" }).click()
+  await expect(
+    page.getByRole("region", { name: "components/organ-viewer.tsx source" })
+  ).toContainText("asChild")
+  // Long files start folded.
+  const expand = page.getByRole("button", {
+    name: "Expand components/organ-viewer.tsx",
+  })
+  await expect(expand).toHaveAttribute("aria-expanded", "false")
+  await expand.click()
+  await expect(
+    page.getByRole("button", { name: "Collapse components/organ-viewer.tsx" })
+  ).toHaveAttribute("aria-expanded", "true")
+
+  // The choice holds on the next component page.
+  await page.goto("/docs/components/heart")
+  await expect(
+    page
+      .getByRole("group", { name: "Primitive library" })
+      .getByRole("button", { name: "Radix UI" })
+  ).toHaveAttribute("aria-pressed", "true")
+  expect(errors).toEqual([])
+})
+
+test("helper and utility pages show a working example and pass an accessibility scan", async ({
+  page,
+  request,
+}) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  const helpers = registrySchema
+    .parse(await (await request.get("/r/registry.json")).json())
+    .items.filter(({ categories }) => categories?.includes("helper"))
+  expect(helpers.length).toBeGreaterThan(0)
+  const pages = [
+    ...helpers.map((item) => ({
+      path: `/docs/helpers/${item.name}`,
+      title: item.title ?? item.name,
+      command: item.name,
+    })),
+    // The CSS utilities install together, so every page gives one command.
+    ...["heartbeat", "ecg-grid", "severity"].map((name) => ({
+      path: `/docs/utilities/${name}`,
+      title: name,
+      command: "utilities",
+    })),
+  ]
+  for (const { path, title, command } of pages) {
+    await page.goto(path)
+    await expect(
+      page.getByRole("heading", { name: title, level: 1 })
+    ).toBeVisible()
+    await expect(
+      page.getByRole("group", { name: `${title} example` })
+    ).toBeVisible()
+    await expect(
+      page.getByRole("region", { name: "Installation command" })
+    ).toContainText(command)
+    const axe = await new AxeBuilder({ page }).analyze()
+    expect(axe.violations).toEqual([])
+  }
+  // The CSS utilities are compiled into the site, as they are for a project.
+  await page.goto("/docs/utilities/heartbeat")
+  expect(
+    await page
+      .locator(".animate-heartbeat")
+      .first()
+      .evaluate((element) => getComputedStyle(element).animationName)
+  ).toBe("heartbeat")
+  await page.goto("/docs/helpers/clinical-units")
+  const units = page.getByRole("group", { name: "Clinical units example" })
+  await units.getByLabel(/^Value/).fill("18")
+  // 18 mg/dL of glucose is 1 mmol/L.
+  await expect(units.locator("p[aria-live]")).toHaveText(/^1\s+mmol\/L$/)
+  expect(errors).toEqual([])
+})
+
+test("AI Elements cite sources, mark unsupported claims and record review", async ({
+  page,
+  request,
+}) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  const elements = registrySchema
+    .parse(await (await request.get("/r/registry.json")).json())
+    .items.filter(({ categories }) => categories?.includes("ai"))
+  expect(elements.length).toBeGreaterThan(0)
+  for (const item of elements) {
+    await page.goto(`/docs/ai-elements/${item.name}`)
+    await expect(
+      page.getByRole("heading", { name: item.title, level: 1 })
+    ).toBeVisible()
+    await expect(
+      page.getByRole("group", { name: `${item.title} example` })
+    ).toBeVisible()
+    const axe = await new AxeBuilder({ page }).analyze()
+    expect(axe.violations).toEqual([])
+  }
+
+  await page.goto("/docs/ai-elements")
+  const example = page.getByRole("group", {
+    name: "A clinical assistant example",
+  })
+  const note = example.getByRole("article", { name: "AI-drafted note" })
+  // A claim without a source says so to screen readers.
+  await expect(note.getByText("(no source)").first()).toBeAttached()
+  // A citation opens on focus, as shadcn's Inline Citation does. The note
+  // cites the troponin result twice.
+  await note.getByRole("button", { name: "Troponin" }).first().focus()
+  await expect(page.getByText("99th percentile 26 ng/L")).toBeVisible()
+  await page.keyboard.press("Escape")
+  // The records it used open from one line, as shadcn's Sources do.
+  await note.getByRole("button", { name: /Used 4 records/ }).click()
+  await expect(note.getByText(/Chest pain pathway/)).toBeVisible()
+
+  await expect(example.getByRole("note")).toContainText("AI-generated draft")
+  // Rejecting needs a reason; approving records the reviewer.
+  await example.getByRole("button", { name: "Reject" }).click()
+  const reason = example.getByRole("textbox", { name: "Reason for rejecting" })
+  await expect(reason).toBeFocused()
+  await expect(
+    example.getByRole("button", { name: "Reject", exact: true })
+  ).toBeDisabled()
+  await example.getByRole("button", { name: "Cancel" }).click()
+  await example.getByRole("button", { name: "Approve" }).click()
+  await expect(example).toContainText("Approved by Dr A. Rivera")
+  await expect(example.getByRole("note")).toContainText(
+    "AI-generated, reviewed"
+  )
+  await example.getByRole("button", { name: "Undo" }).click()
+  await expect(example).toContainText("Awaiting review")
+  expect(errors).toEqual([])
+})
+
+test("themes redirect to create, which gives the commands", async ({
+  page,
+}) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  await page.goto("/themes")
+  await expect(page).toHaveURL(/\/create$/)
+  const settings = page.getByRole("complementary", { name: "Project settings" })
+  await expect(settings).toContainText("--preset b0")
+  // Get Code shows the commands for the settings.
+  const getCode = page.getByRole("button", { name: "Get Code" })
+  await getCode.click()
+  const dialog = page.getByRole("dialog", { name: "Create the project" })
+  await expect(
+    dialog.getByRole("region", { name: "Create the project" })
+  ).toContainText("init -t next -b base -p b0")
+  await expect(
+    dialog.getByRole("region", { name: "Registry namespace" })
+  ).toHaveCount(0)
+  await page.keyboard.press("Escape")
+
+  await settings.getByRole("combobox", { name: "Library" }).click()
+  await page.getByRole("option", { name: "Radix UI" }).click()
+  await settings.getByRole("combobox", { name: "Theme" }).click()
+  await page.getByRole("option", { name: "Blue" }).click()
+  await settings.getByRole("button", { name: /OrganUI items/ }).click()
+  await page.getByRole("checkbox", { name: "Lab results table" }).click()
+  await page.keyboard.press("Escape")
+  await expect(settings).not.toContainText("--preset b0")
+  await getCode.click()
+  await expect(
+    dialog.getByRole("region", { name: "Create the project" })
+  ).toContainText("-b radix")
+  await expect(
+    dialog.getByRole("region", { name: "Registry namespace" })
+  ).toContainText("/r/styles/{style}/{name}.json")
+  await expect(
+    dialog.getByRole("region", { name: "Add OrganUI items" })
+  ).toContainText("@organui/vital-signs @organui/lab-results")
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+  expect(errors).toEqual([])
+})
+
+test("the colours page lists every organ's structure colours to copy", async ({
+  page,
+}) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  await page.goto("/colors")
+  await expect(
+    page.getByRole("heading", { name: "Colours", level: 1 })
+  ).toBeVisible()
+  const heart = page.getByRole("region", { name: "Heart" })
+  await expect(
+    heart.getByRole("button", { name: "Copy Right atrium #a96d70" })
+  ).toBeVisible()
+  await expect(
+    page.getByRole("region", { name: "Dermatome regions" }).getByRole("button")
+  ).toHaveCount(4)
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+  expect(errors).toEqual([])
+})
+
+test("charts show health data on shadcn's chart, with their code", async ({
+  page,
+}) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  await page.goto("/charts")
+  await expect(page).toHaveURL(/\/charts\/area$/)
+  await expect(
+    page.getByRole("heading", { name: "Charts for Health Data", level: 1 })
+  ).toBeVisible()
+  const types = page.getByRole("navigation", { name: "Chart types" })
+  await expect(types.getByRole("link")).toHaveText([
+    "Area Charts",
+    "Bar Charts",
+    "Line Charts",
+    "Pie Charts",
+    "Radar Charts",
+    "Radial Charts",
+  ])
+  await page
+    .getByRole("button", { name: "View code: Admissions area chart" })
+    .click()
+  await expect(page.getByRole("dialog")).toContainText(
+    "export function ChartAreaAdmissions"
+  )
+  await page.keyboard.press("Escape")
+  // Scan once the dialog has faded out.
+  await expect(page.getByRole("dialog")).toHaveCount(0)
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+  await types.getByRole("link", { name: "Radial Charts" }).click()
+  await expect(page).toHaveURL(/\/charts\/radial/)
+  await expect(
+    page.getByRole("button", { name: "View code: Steps radial chart" })
+  ).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test("component pages end with examples and an API reference", async ({
+  page,
+}) => {
+  test.setTimeout(120_000)
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  for (const [name, component] of [
+    ["anatomy-tree", "AnatomyTree"],
+    ["body-map", "BodyMap"],
+    ["dermatome-map", "DermatomeMap"],
+    ["ecg-trace", "EcgTrace"],
+    ["growth-chart", "GrowthChart"],
+    ["lab-results", "LabResultsTable"],
+    ["medication-schedule", "MedicationSchedule"],
+    ["vital-signs", "VitalSigns"],
+  ] as const) {
+    await page.goto(`/docs/components/${name}`)
+    await expect(
+      page.getByRole("heading", { name: "Examples", level: 2 })
+    ).toBeVisible()
+    // Each example has a linkable heading and a live preview.
+    expect(
+      await page.getByRole("heading", { level: 3 }).count()
+    ).toBeGreaterThanOrEqual(2)
+    const props = page.getByRole("table", { name: `${component} props` })
+    await expect(props).toBeVisible()
+    expect(await props.getByRole("row").count()).toBeGreaterThan(2)
+  }
   expect(errors).toEqual([])
 })

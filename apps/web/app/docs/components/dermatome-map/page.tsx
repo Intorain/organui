@@ -1,7 +1,14 @@
 import { ComponentPreview } from "@/components/component-preview"
+import { ComponentInstallation } from "@/components/component-installation"
+import { CodeSnippet } from "@/components/code-snippet"
+import { DocsHeader } from "@/components/docs-header"
+import { DocsHeading } from "@/components/docs-heading"
 import { DocsPager } from "@/components/docs-pager"
+import { PropsTable } from "@/components/props-table"
+import { ComponentExamples } from "@/components/component-examples"
+import { componentExamples } from "@/lib/component-examples"
 import Link from "next/link"
-import { codeBlock, docsMetadata, shadcn } from "@/lib/registry"
+import { docsMetadata, shadcn } from "@/lib/registry"
 import { site } from "@/lib/site"
 
 export const metadata = docsMetadata(
@@ -32,22 +39,16 @@ const colors = { C6: "var(--destructive)", C7: "oklch(0.8 0.12 85)" }
 export default function Page() {
   return (
     <div className="flex flex-col gap-10">
-      <header className="flex flex-col gap-4">
-        <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
-          Components / Clinical
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight">Dermatome map</h1>
-        <p className="max-w-2xl text-lg text-muted-foreground">
+      <DocsHeader href="/docs/components/dermatome-map" title="Dermatome map">
+        <p className="text-[1.05rem] text-balance text-muted-foreground sm:text-base md:max-w-[80%]">
           The skin each spinal nerve supplies, front and back. Pick a level from
           the list or a region on the body to see its area and the key point
           where it is tested.
         </p>
-      </header>
+      </DocsHeader>
       <ComponentPreview name="dermatome-map-demo" />
       <section className="flex flex-col gap-4">
-        <h2 id="installation" className="text-2xl font-semibold">
-          Installation
-        </h2>
+        <DocsHeading id="installation">Installation</DocsHeading>
         <p>
           In a project set up as in{" "}
           <Link href="/docs/installation" className="underline">
@@ -55,14 +56,10 @@ export default function Page() {
           </Link>
           , run:
         </p>
-        <pre
-          tabIndex={0}
-          role="region"
-          aria-label="Installation command"
-          className={codeBlock}
-        >
-          {`bunx ${shadcn} add ${site.url}/r/dermatome-map.json`}
-        </pre>
+        <ComponentInstallation
+          name="dermatome-map"
+          command={`bunx ${shadcn} add ${site.url}/r/dermatome-map.json`}
+        />
         <p>
           Or by name: <code>bunx {shadcn} add @organui/dermatome-map</code>.
         </p>
@@ -76,17 +73,8 @@ export default function Page() {
         </a>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="usage" className="text-2xl font-semibold">
-          Usage
-        </h2>
-        <pre
-          tabIndex={0}
-          role="region"
-          aria-label="State wiring example"
-          className={codeBlock}
-        >
-          {usage}
-        </pre>
+        <DocsHeading id="usage">Usage</DocsHeading>
+        <CodeSnippet label="State wiring example" code={usage} />
         <p>
           Selection is controlled. Levels use the 28 sensory levels of the
           International Standards for Neurological Classification of Spinal Cord
@@ -99,17 +87,8 @@ export default function Page() {
         </p>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="show-results" className="text-2xl font-semibold">
-          Show results
-        </h2>
-        <pre
-          tabIndex={0}
-          role="region"
-          aria-label="Colors example"
-          className={codeBlock}
-        >
-          {results}
-        </pre>
+        <DocsHeading id="show-results">Show results</DocsHeading>
+        <CodeSnippet label="Colors example" code={results} />
         <p>
           Pass <code>colors</code> to fill levels with your own CSS colors, for
           example to show a sensory exam. Levels you leave out keep the default
@@ -119,9 +98,7 @@ export default function Page() {
         </p>
       </section>
       <section className="flex flex-col gap-4">
-        <h2 id="keyboard-and-accessibility" className="text-2xl font-semibold">
-          Keyboard and accessibility
-        </h2>
+        <DocsHeading id="accessibility">Accessibility</DocsHeading>
         <p>
           The level list is one tab stop. Arrow keys move between levels, Home
           and End jump to C2 and S4-5, Enter or Space selects, and Escape clears
@@ -138,6 +115,8 @@ export default function Page() {
           unassigned.
         </p>
       </section>
+      <ComponentExamples examples={componentExamples["dermatome-map"]!} />
+      <PropsTable item="dermatome-map" />
       <DocsPager href="/docs/components/dermatome-map" />
     </div>
   )

@@ -12,7 +12,7 @@ const catalog = JSON.parse(
     ),
     "utf8"
   )
-) as { items: { name: string; type: string }[] }
+) as { items: { name: string; type: string; categories?: string[] }[] }
 
 // Workspace packages are transpiled automatically by Next.js 16.
 const nextConfig: NextConfig = {
@@ -42,19 +42,47 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  async rewrites() {
+    return [
+      // Every docs page is also served as Markdown at its address plus .md.
+      { source: "/docs.md", destination: "/llm" },
+      { source: "/docs/:path*.md", destination: "/llm/:path*" },
+      // A registry URL with {style} in it gets the build for the project's
+      // library: base-nova, base-vega and so on share one, radix-* the other.
+      {
+        source: "/r/styles/:style(base-[a-z0-9-]+)/:name",
+        destination: "/r/:name",
+      },
+      {
+        source: "/r/styles/:style(radix-[a-z0-9-]+)/:name",
+        destination: "/r/radix/:name",
+      },
+    ]
+  },
   // Component pages moved from /docs/<name> to /docs/components/<name>.
   // Items installed from v0.3.0 and earlier print the old address after
   // install, so these stay. Each is listed by name because /docs/<slug> is
   // also where the guides live.
   async redirects() {
     return [
+      // Only components: AI Elements, helpers and utilities were never there.
       ...catalog.items
-        .filter((item) => item.type !== "registry:block")
+        .filter(
+          (item) =>
+            item.type !== "registry:block" &&
+            !["ai", "helper", "utility"].some((category) =>
+              item.categories?.includes(category)
+            )
+        )
         .map((item) => ({
           source: `/docs/${item.name}`,
           destination: `/docs/components/${item.name}`,
           permanent: true,
         })),
+      // Charts open on their first type, as on shadcn/ui.
+      { source: "/charts", destination: "/charts/area", permanent: false },
+      // Themes live in Create, as on shadcn/ui.
+      { source: "/themes", destination: "/create", permanent: true },
       // The organs gallery's first address.
       {
         source: "/organs",

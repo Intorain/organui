@@ -11,17 +11,24 @@
     "typecheck": "tsc --noEmit",
     "stage-registry": "bun scripts/stage-registry.ts",
     "thumbnails": "bun scripts/organ-thumbnails.ts",
+    "screenshots": "bun scripts/screenshots.ts",
     "test": "bun test tests"
   },
   "dependencies": {
+    "@hookform/resolvers": "^6.0.0",
+    "@vercel/analytics": "^2.0.1",
     "@workspace/registry": "workspace:*",
     "@workspace/ui": "workspace:*",
+    "linkedom": "0.18.12",
     "lucide-react": "^1.59.0",
     "next": "16.4.2",
     "next-themes": "^0.4.6",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "shiki": "4.5.0"
+    "react-hook-form": "^7.90.0",
+    "shadcn": "4.22.1",
+    "shiki": "4.5.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

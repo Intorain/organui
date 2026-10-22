@@ -2,9 +2,16 @@ import {
   componentGroups,
   componentsIndex,
   guides,
+  installationGuides,
   mainNav,
   registryBlocks,
   registryItems,
+  utilitiesIndex,
+  utilityItems,
+  helpersIndex,
+  helperItems,
+  aiIndex,
+  aiItems,
 } from "@/lib/registry"
 
 export type SearchEntry = {
@@ -22,9 +29,22 @@ export type SearchGroup = { heading: string; entries: SearchEntry[] }
 export const searchIndex: SearchGroup[] = [
   {
     heading: "Pages",
-    entries: mainNav.map(({ title, href }) => ({ title, href })),
+    entries: [
+      ...mainNav.map(({ title, href }) => ({ title, href })),
+      { title: "Colours", href: "/colors" },
+    ],
   },
-  { heading: "Docs", entries: [...guides, componentsIndex] },
+  {
+    heading: "Docs",
+    entries: [
+      ...guides,
+      ...installationGuides,
+      componentsIndex,
+      aiIndex,
+      helpersIndex,
+      utilitiesIndex,
+    ],
+  },
   ...componentGroups.map(({ id, title }) => ({
     heading: title,
     entries: registryItems
@@ -36,6 +56,33 @@ export const searchIndex: SearchGroup[] = [
         install,
       })),
   })),
+  {
+    heading: "AI Elements",
+    entries: aiItems.map(({ title, href, description, install }) => ({
+      title,
+      href,
+      description,
+      install,
+    })),
+  },
+  {
+    heading: "Helpers",
+    entries: helperItems.map(({ title, href, description, install }) => ({
+      title,
+      href,
+      description,
+      install,
+    })),
+  },
+  {
+    heading: "Utilities",
+    entries: utilityItems.map(({ title, href, description, install }) => ({
+      title,
+      href,
+      description,
+      install,
+    })),
+  },
   {
     heading: "Blocks",
     entries: registryBlocks.map(({ title, href, description, install }) => ({

@@ -42,7 +42,13 @@ function groupOf(categories: readonly string[] = []) {
 // item appears in the sidebar and the index once it has a page at its href.
 // Blocks are listed on /blocks instead.
 export const registryItems = catalog.items
-  .filter((item) => item.type !== "registry:block")
+  .filter(
+    (item) =>
+      item.type !== "registry:block" &&
+      !item.categories?.includes("utility") &&
+      !item.categories?.includes("helper") &&
+      !item.categories?.includes("ai")
+  )
   .map((item) => {
     const categories: readonly string[] =
       "categories" in item ? item.categories : []
@@ -72,24 +78,99 @@ export type RegistryItem = (typeof registryItems)[number]
 
 export const organs = registryItems.filter(({ organ }) => organ)
 
+// TypeScript helpers that install in lib, under /docs/helpers.
+export const helperItems = catalog.items
+  .filter((item) => item.categories?.includes("helper"))
+  .map((item) => ({
+    name: item.name,
+    title: item.title ?? item.name,
+    description: item.description,
+    href: `/docs/helpers/${item.name}`,
+    json: `/r/${item.name}.json`,
+    install: install(item),
+  }))
+  .sort((a, b) => a.title.localeCompare(b.title))
+
+const utilitiesItem = catalog.items.find(({ name }) => name === "utilities")
+if (!utilitiesItem) throw new Error("No utilities item in the registry")
+
+// The CSS utilities install together, as shadcn's come in one stylesheet;
+// each family of classes has its own page under /docs/utilities.
+export const utilityItems = [
+  {
+    name: "ecg-grid",
+    title: "ecg-grid",
+    description: "Utilities for drawing ECG paper behind a trace.",
+  },
+  {
+    name: "heartbeat",
+    title: "heartbeat",
+    description: "Utilities for pulsing an element like a heartbeat.",
+  },
+  {
+    name: "severity",
+    title: "severity",
+    description:
+      "Theme colours for clinical severity: normal, info, warning and critical.",
+  },
+].map((page) => ({
+  ...page,
+  href: `/docs/utilities/${page.name}`,
+  install: install(utilitiesItem),
+}))
+
+// Patterns for AI in clinical interfaces, under /docs/ai-elements, in the
+// order a reviewer meets them.
+const aiOrder = [
+  "ai-disclaimer",
+  "ai-note",
+  "clinical-citation",
+  "clinical-sources",
+  "differential-list",
+  "clinician-review",
+]
+
+export const aiItems = catalog.items
+  .filter((item) => item.categories?.includes("ai"))
+  .map((item) => ({
+    name: item.name,
+    title: item.title ?? item.name,
+    description: item.description,
+    href: `/docs/ai-elements/${item.name}`,
+    json: `/r/${item.name}.json`,
+    install: install(item),
+  }))
+  .sort((a, b) => aiOrder.indexOf(a.name) - aiOrder.indexOf(b.name))
+
 // Where the CLI writes each file, relative to a Next.js app with the default
 // aliases. Pages only install in frameworks with file routing.
-function installedPath(file: { path: string; type: string; target?: string }) {
+export function installedPath(file: {
+  path: string
+  type: string
+  target?: string
+}) {
   if (file.target) return file.target
   const name = file.path.split("/").at(-1)
+  if (file.type === "registry:lib") return `lib/${name}`
   return file.type === "registry:ui"
     ? `components/ui/${name}`
     : `components/${name}`
 }
 
 export const registryBlocks = catalog.items
-  .filter((item) => item.type === "registry:block")
+  .filter(
+    (item) =>
+      item.type === "registry:block" && !item.categories?.includes("charts")
+  )
   .map((item) => ({
     name: item.name,
     title: item.title ?? item.name,
     description: item.description,
     href: `/blocks#${item.name}`,
     view: `/view/${item.name}`,
+    // The height /blocks frames the block's page at on wide screens.
+    frameHeight:
+      ("meta" in item ? item.meta?.iframeHeight : undefined) ?? "44rem",
     json: `/r/${item.name}.json`,
     install: install(item),
     files: item.files.map((file) => ({
@@ -103,15 +184,38 @@ export const registryBlocks = catalog.items
       .map((name) => name.replace("@organui/", "")),
   }))
 
+// The CLI fills {style} from components.json, so each project gets the
+// build for its library: Radix styles need this, Base UI styles work with or
+// without it.
+// The chart types /charts shows, each a page of charts, as on shadcn/ui.
+export const chartTypes = [
+  { type: "area", title: "Area Charts" },
+  { type: "bar", title: "Bar Charts" },
+  { type: "line", title: "Line Charts" },
+  { type: "pie", title: "Pie Charts" },
+  { type: "radar", title: "Radar Charts" },
+  { type: "radial", title: "Radial Charts" },
+] as const
+
+export type ChartType = (typeof chartTypes)[number]["type"]
+
+export const chartItems = catalog.items
+  .filter((item) => item.categories?.includes("charts"))
+  .map((item) => ({
+    name: item.name,
+    title: item.title ?? item.name,
+    description: item.description,
+    type: (item.categories ?? [])
+      .find((category) => category.startsWith("charts-"))!
+      .replace("charts-", "") as ChartType,
+    install: install(item),
+  }))
+
 export const registryNamespace = JSON.stringify(
-  { registries: { "@organui": `${site.url}/r/{name}.json` } },
+  { registries: { "@organui": `${site.url}/r/styles/{style}/{name}.json` } },
   null,
   2
 )
-
-// Shared style for the scrollable, focusable code regions on docs pages.
-export const codeBlock =
-  "overflow-auto rounded-lg border bg-muted/30 p-4 text-sm focus-visible:outline-2 focus-visible:outline-ring"
 
 export type NavLink = { title: string; href: string }
 
@@ -135,14 +239,46 @@ export const guides: (NavLink & { description: string })[] = [
     description: "The design tokens components read, and dark mode.",
   },
   {
-    title: "Base UI",
+    title: "Base UI and Radix",
     href: "/docs/base-ui",
-    description: "Why items with controls need one of shadcn's Base UI styles.",
+    description:
+      "Install on either library, and the items that ship a copy for each.",
+  },
+  {
+    title: "Forms",
+    href: "/docs/forms",
+    description:
+      "Use the clinical inputs in forms with React Hook Form, Zod and shadcn's Field.",
   },
   {
     title: "Licences",
     href: "/docs/licences",
     description: "MIT code, and the licence each model and dataset keeps.",
+  },
+  {
+    title: "MCP",
+    href: "/docs/mcp",
+    description:
+      "Browse and install components from an AI assistant, and read the docs as Markdown.",
+  },
+  {
+    title: "Changelog",
+    href: "/docs/changelog",
+    description: "What each release added and changed.",
+  },
+]
+
+// Setting up a new project in each framework the registry is tested with.
+export const installationGuides: (NavLink & { description: string })[] = [
+  {
+    title: "Next.js",
+    href: "/docs/installation/next",
+    description: "Create a Next.js app with shadcn and add OrganUI components.",
+  },
+  {
+    title: "Vite",
+    href: "/docs/installation/vite",
+    description: "Create a Vite app with shadcn and add OrganUI components.",
   },
 ]
 
@@ -150,6 +286,26 @@ export const componentsIndex: NavLink & { description: string } = {
   title: "Components",
   href: "/docs/components",
   description: "Every OrganUI component, grouped by category.",
+}
+
+export const aiIndex: NavLink & { description: string } = {
+  title: "AI Elements",
+  href: "/docs/ai-elements",
+  description:
+    "Patterns for AI in clinical interfaces: disclosure, sources, reasoning and sign-off.",
+}
+
+export const utilitiesIndex: NavLink & { description: string } = {
+  title: "Utilities",
+  href: "/docs/utilities",
+  description: "Tailwind utilities for clinical interfaces, in one install.",
+}
+
+export const helpersIndex: NavLink & { description: string } = {
+  title: "Helpers",
+  href: "/docs/helpers",
+  description:
+    "Clinical calculations in TypeScript: ages, z-scores, reference ranges, units and body measurements.",
 }
 
 export const organsPage: NavLink & { description: string } = {
@@ -163,30 +319,74 @@ export const mainNav: NavLink[] = [
   { title: "Components", href: componentsIndex.href },
   { title: organsPage.title, href: organsPage.href },
   { title: "Blocks", href: "/blocks" },
+  { title: "Charts", href: "/charts/area" },
+  { title: "Create", href: "/create" },
 ]
 
-// The sidebar lists the guides and every component except the organs, which
-// the header's Organs link opens as a gallery; each organ page is still in
-// search and in the previous and next links.
+// Pages added in the latest release, marked with a dot in the sidebar.
+export const pagesNew: string[] = [
+  "/docs/base-ui",
+  "/docs/forms",
+  aiIndex.href,
+  helpersIndex.href,
+  utilitiesIndex.href,
+]
+
+// The sidebar lists the guides and every component, the organs after the
+// viewer and the tree they're built on.
 export const docsNav: DocsNavSection[] = [
-  { title: "Sections", items: [...guides, componentsIndex] },
-  ...componentGroups.map(({ id, title }) => ({
-    title,
-    items: registryItems
-      .filter((item) => item.group === id && !item.organ)
-      .map(({ title, href }) => ({ title, href })),
-  })),
+  {
+    title: "Sections",
+    items: [...guides, componentsIndex, aiIndex, helpersIndex, utilitiesIndex],
+  },
+  { title: "Installation", items: installationGuides },
+  ...componentGroups.flatMap(({ id, title }) => [
+    // AI Elements and utilities come before the long list of organs.
+    ...(id === "organs"
+      ? [
+          {
+            title: aiIndex.title,
+            items: aiItems.map(({ title, href }) => ({ title, href })),
+          },
+          {
+            title: helpersIndex.title,
+            items: helperItems.map(({ title, href }) => ({ title, href })),
+          },
+          {
+            title: utilitiesIndex.title,
+            items: utilityItems.map(({ title, href }) => ({ title, href })),
+          },
+        ]
+      : []),
+    {
+      title,
+      items: registryItems
+        .filter((item) => item.group === id)
+        .map(({ title, href }) => ({ title, href })),
+    },
+  ]),
 ]
 
 // Reading order for the previous and next links.
 // The organs gallery comes before the organs, after the viewer and tree.
-const pageOrder: NavLink[] = [
-  ...guides,
+// The framework guides follow Installation. Every docs page is here once.
+export const pageOrder: NavLink[] = [
+  ...guides.flatMap((guide) =>
+    guide.href === "/docs/installation"
+      ? [guide, ...installationGuides]
+      : [guide]
+  ),
   componentsIndex,
   ...registryItems.flatMap(({ title, href, name }) => [
     ...(name === organs[0]?.name ? [organsPage] : []),
     { title, href },
   ]),
+  aiIndex,
+  ...aiItems.map(({ title, href }) => ({ title, href })),
+  helpersIndex,
+  ...helperItems.map(({ title, href }) => ({ title, href })),
+  utilitiesIndex,
+  ...utilityItems.map(({ title, href }) => ({ title, href })),
 ]
 
 export function neighbours(href: string) {
@@ -205,8 +405,15 @@ export function docsMetadata(
 ): Metadata {
   // Listed by hand on purpose: a page's own openGraph replaces the root
   // opengraph-image, so without this docs pages share no image (see #90).
+  // Each page gets a card with its own title and summary.
+  const query = new URLSearchParams({ title, description })
   const images = [
-    { url: site.socialImage, alt: site.title, width: 1200, height: 630 },
+    {
+      url: `/og?${query}`,
+      alt: `${title} — OrganUI`,
+      width: 1200,
+      height: 630,
+    },
   ]
   return {
     title,

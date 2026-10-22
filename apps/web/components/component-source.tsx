@@ -9,11 +9,11 @@ import {
   CodeBlock,
   CodeBlockActions,
   CodeBlockContent,
-  CodeBlockCopyButton,
   CodeBlockHeader,
   CodeBlockLine,
   CodeBlockTitle,
 } from "@workspace/ui/components/code-block"
+import { CopyButton } from "@/components/copy-button"
 
 const readExampleSource = cache(async (file: string) => {
   const source = await readFile(join(process.cwd(), "examples", file), "utf8")
@@ -29,8 +29,12 @@ const readExampleSource = cache(async (file: string) => {
       "@/lib/$1"
     )
     .replace(
-      /@workspace\/registry\/(anatomy-tree|body-map|ecg-trace|vital-signs|medication-schedule|dermatome-map|image-viewer|growth-chart)/g,
+      /@workspace\/registry\/(anatomy-tree|body-map|ecg-trace|vital-signs|medication-schedule|dermatome-map|image-viewer|growth-chart|lab-results|ai-disclaimer|clinical-citation|clinical-sources|differential-list|clinician-review|ai-note)/g,
       "@/components/ui/$1"
+    )
+    .replace(
+      /@workspace\/registry\/(age|z-scores|reference-ranges|clinical-units|body-measurements)/g,
+      "@/lib/$1"
     )
     .replaceAll("@workspace/registry/", "@/components/")
     .trimEnd()
@@ -56,11 +60,16 @@ export async function ComponentSource({
         <CodeBlockHeader>
           <CodeBlockTitle>{name}.tsx</CodeBlockTitle>
           <CodeBlockActions>
-            <CodeBlockCopyButton value={fullCode} />
+            <CopyButton
+              event="copy_code"
+              properties={{ name }}
+              value={fullCode}
+            />
           </CodeBlockActions>
         </CodeBlockHeader>
       )}
       <CodeBlockContent
+        lineNumbers
         aria-label={maxLines ? undefined : `${item.title} code`}
         tabIndex={maxLines ? -1 : 0}
       >

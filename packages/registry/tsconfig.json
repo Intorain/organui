@@ -9,6 +9,45 @@
     // alias points at the base-nova copies the docs site installs. Blocks
     // import the other files they ship where the CLI installs them.
     "paths": {
+      "@/components/ui/ai-disclaimer": [
+        "./registry/base-nova/ai-disclaimer/ai-disclaimer.tsx"
+      ],
+      "@/components/ui/clinical-citation": [
+        "./registry/base-nova/clinical-citation/clinical-citation.tsx"
+      ],
+      "@/components/ui/clinical-sources": [
+        "./registry/base-nova/clinical-sources/clinical-sources.tsx"
+      ],
+      "@/components/ui/differential-list": [
+        "./registry/base-nova/differential-list/differential-list.tsx"
+      ],
+      "@/components/ui/clinician-review": [
+        "./registry/base-nova/clinician-review/clinician-review.tsx"
+      ],
+      "@/components/ui/ai-note": ["./registry/base-nova/ai-note/ai-note.tsx"],
+      "@/components/ui/ecg-trace": [
+        "./registry/base-nova/ecg-trace/ecg-trace.tsx"
+      ],
+      "@/components/ui/lab-results": [
+        "./registry/base-nova/lab-results/lab-results.tsx"
+      ],
+      "@/components/ui/medication-schedule": [
+        "./registry/base-nova/medication-schedule/medication-schedule.tsx"
+      ],
+      "@/components/ui/vital-signs": [
+        "./registry/base-nova/vital-signs/vital-signs.tsx"
+      ],
+      "@/lib/age": ["./registry/base-nova/age/age.ts"],
+      "@/lib/z-scores": ["./registry/base-nova/z-scores/z-scores.ts"],
+      "@/lib/reference-ranges": [
+        "./registry/base-nova/reference-ranges/reference-ranges.ts"
+      ],
+      "@/lib/clinical-units": [
+        "./registry/base-nova/clinical-units/clinical-units.ts"
+      ],
+      "@/lib/body-measurements": [
+        "./registry/base-nova/body-measurements/body-measurements.ts"
+      ],
       "@/components/ui/anatomy-tree": [
         "./registry/base-nova/anatomy-tree/anatomy-tree.tsx"
       ],
@@ -20,6 +59,9 @@
       ],
       "@/components/organ-switcher": [
         "./registry/base-nova/blocks/explorer-03/components/organ-switcher.tsx"
+      ],
+      "@/components/patient-dashboard": [
+        "./registry/base-nova/blocks/dashboard-01/components/patient-dashboard.tsx"
       ],
       "@/components/adrenals": ["./registry/base-nova/adrenals/adrenals.tsx"],
       "@/components/appendix": ["./registry/base-nova/appendix/appendix.tsx"],
@@ -88,5 +130,6 @@
       "@/components/*": ["./registry/base-nova/organ-viewer/*"]
     }
   },
-  "include": ["registry", "scripts", "tests"]
+  "include": ["registry", "scripts", "tests"],
+  "exclude": ["registry/radix-nova"]
 }

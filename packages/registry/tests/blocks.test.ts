@@ -5,15 +5,33 @@ import packageJson from "../package.json"
 import bodySystems from "../body-systems.json"
 import registry from "../registry.json"
 
-const blocks = registry.items.filter((item) => item.type === "registry:block")
-const components = registry.items.filter(
-  (item) => item.type !== "registry:block"
+// Charts are blocks too, as in shadcn's registry, documented on /charts.
+const charts = registry.items.filter((item) =>
+  item.categories?.includes("charts")
 )
+const blocks = registry.items.filter(
+  (item) =>
+    item.type === "registry:block" && !item.categories?.includes("charts")
+)
+// Helpers (/docs/helpers) and CSS utilities (/docs/utilities).
+const utilities = registry.items.filter(
+  (item) =>
+    item.categories?.includes("utility") || item.categories?.includes("helper")
+)
+const components = registry.items.filter(
+  (item) =>
+    item.type !== "registry:block" &&
+    !item.categories?.includes("utility") &&
+    !item.categories?.includes("helper")
+)
+const filesOf = (item: (typeof registry.items)[number]) =>
+  "files" in item ? item.files : []
 const names = new Set(registry.items.map(({ name }) => name))
 
 // Where the CLI installs a file, as the import path other files use.
 function importPath(file: { path: string; type: string; target?: string }) {
-  const name = basename(file.path).replace(/\.tsx$/, "")
+  const name = basename(file.path).replace(/\.tsx?$/, "")
+  if (file.type === "registry:lib") return `@/lib/${name}`
   return file.type === "registry:ui"
     ? `@/components/ui/${name}`
     : `@/components/${name}`
@@ -22,8 +40,8 @@ function importPath(file: { path: string; type: string; target?: string }) {
 // The item whose own file installs at an import path, such as organ-viewer for
 // @/components/organ-viewer.
 const owners = new Map(
-  components.flatMap((item) =>
-    item.files.map((file) => [importPath(file), item.name] as const)
+  [...components, ...utilities].flatMap((item) =>
+    filesOf(item).map((file) => [importPath(file), item.name] as const)
   )
 )
 
@@ -38,7 +56,7 @@ test("there are blocks and their names do not clash with components", () => {
 test("item types follow whether the item is a three.js scene", async () => {
   for (const item of components) {
     const sources = await Promise.all(
-      item.files.map((file) =>
+      filesOf(item).map((file) =>
         readFile(new URL(`../${file.path}`, import.meta.url), "utf8")
       )
     )
@@ -51,37 +69,40 @@ test("item types follow whether the item is a three.js scene", async () => {
       item.name,
       scene ? "registry:component" : "registry:ui",
     ])
-    for (const file of item.files) expect(file.type).toBe(item.type)
+    for (const file of filesOf(item)) expect(file.type).toBe(item.type)
   }
 })
 
 // As in shadcn, an item ships only its own files and reaches every other item
 // through registryDependencies.
 test("no two items ship the same file", () => {
-  const paths = registry.items.flatMap(({ files }) =>
-    files.map(({ path }) => path)
+  const paths = registry.items.flatMap((item) =>
+    filesOf(item).map(({ path }) => path)
   )
   expect(new Set(paths).size).toBe(paths.length)
 })
 
 for (const item of registry.items) {
   test(`${item.name} ships its own files and lists everything it imports`, async () => {
-    const folder =
-      item.type === "registry:block"
+    const folder = item.categories?.includes("charts")
+      ? "registry/base-nova/charts/"
+      : item.type === "registry:block"
         ? `registry/base-nova/blocks/${item.name}/`
         : `registry/base-nova/${item.name}/`
     const shipped = new Set<string>()
-    for (const file of item.files) {
+    for (const file of filesOf(item)) {
       expect(file.path).toStartWith(folder)
       if (file.type !== "registry:page") shipped.add(importPath(file))
     }
     const used = new Set<string>()
-    for (const file of item.files) {
+    for (const file of filesOf(item)) {
       const source = await readFile(
         new URL(`../${file.path}`, import.meta.url),
         "utf8"
       )
-      for (const [, path] of source.matchAll(/from "(@\/components\/[^"]+)"/g))
+      for (const [, path] of source.matchAll(
+        /from "(@\/(?:components|lib)\/[^"]+)"/g
+      ))
         used.add(path!)
       expect(source).not.toMatch(/from "\.\.?\//)
     }
@@ -110,10 +131,20 @@ for (const item of registry.items) {
 // shadcn prints an item's docs after installing it.
 test("every item links its documentation after install", () => {
   for (const item of registry.items) {
-    const page =
-      item.type === "registry:block"
+    const kind = item.categories
+      ?.find((category) => category.startsWith("charts-"))
+      ?.replace("charts-", "")
+    const page = kind
+      ? `${item.title}: https://organui.com/charts/${kind}#${item.name}`
+      : item.type === "registry:block"
         ? `${item.title}: https://organui.com/blocks#${item.name}`
-        : `${item.title} docs: https://organui.com/docs/components/${item.name}`
+        : item.categories?.includes("utility")
+          ? `${item.title} docs: https://organui.com/docs/utilities`
+          : item.categories?.includes("helper")
+            ? `${item.title} docs: https://organui.com/docs/helpers/${item.name}`
+            : item.categories?.includes("ai")
+              ? `${item.title} docs: https://organui.com/docs/ai-elements/${item.name}`
+              : `${item.title} docs: https://organui.com/docs/components/${item.name}`
     expect(item.docs).toStartWith(page)
   }
 })
@@ -128,6 +159,9 @@ test("every component belongs to one docs group", () => {
     "cell",
     "anatomy",
     "organ",
+    "utility",
+    "helper",
+    "ai",
   ]
   for (const item of registry.items) {
     if (item.type === "registry:block") continue
@@ -211,3 +245,14 @@ for (const block of blocks) {
         ).toBe(true)
   })
 }
+
+test("each chart has one chart type and installs one file", () => {
+  expect(charts.length).toBeGreaterThan(0)
+  for (const chart of charts) {
+    expect(
+      chart.categories?.filter((category) => category.startsWith("charts-"))
+    ).toHaveLength(1)
+    expect(chart.files).toHaveLength(1)
+    expect(chart.registryDependencies).toEqual(["card", "chart"])
+  }
+})
