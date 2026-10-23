@@ -1,6 +1,32 @@
 // Named documentation examples for the diseases, on the public components
 // consumers install. Imports stay explicit so each page loads only its own.
 export const diseaseExamples = {
+  "acute-angle-closure-glaucoma-demo": {
+    title: "Acute angle-closure glaucoma",
+    file: "acute-angle-closure-glaucoma-demo.tsx",
+    render: async () => {
+      const { Example } = await import("./acute-angle-closure-glaucoma-demo")
+      return <Example />
+    },
+  },
+  "acute-angle-closure-glaucoma-without-panel": {
+    title: "Acute angle-closure glaucoma Without Panel",
+    file: "acute-angle-closure-glaucoma-without-panel.tsx",
+    render: async () => {
+      const { Example } =
+        await import("./acute-angle-closure-glaucoma-without-panel")
+      return <Example />
+    },
+  },
+  "acute-angle-closure-glaucoma-controlled": {
+    title: "Acute angle-closure glaucoma Controlled",
+    file: "acute-angle-closure-glaucoma-controlled.tsx",
+    render: async () => {
+      const { Example } =
+        await import("./acute-angle-closure-glaucoma-controlled")
+      return <Example />
+    },
+  },
   "acute-appendicitis-demo": {
     title: "Acute appendicitis",
     file: "acute-appendicitis-demo.tsx",

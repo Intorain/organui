@@ -133,6 +133,9 @@
       "@/components/disease-model": [
         "./registry/base-nova/disease-viewer/disease-model.ts"
       ],
+      "@/components/acute-angle-closure-glaucoma": [
+        "./registry/base-nova/acute-angle-closure-glaucoma/acute-angle-closure-glaucoma.tsx"
+      ],
       "@/components/acute-appendicitis": [
         "./registry/base-nova/acute-appendicitis/acute-appendicitis.tsx"
       ],
