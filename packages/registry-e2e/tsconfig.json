@@ -183,6 +183,9 @@
       "@/components/autoimmune-hepatitis": [
         "../registry/registry/base-nova/autoimmune-hepatitis/autoimmune-hepatitis.tsx"
       ],
+      "@/components/gallstone-disease": [
+        "../registry/registry/base-nova/gallstone-disease/gallstone-disease.tsx"
+      ],
       "@/components/graves-disease": [
         "../registry/registry/base-nova/graves-disease/graves-disease.tsx"
       ],
