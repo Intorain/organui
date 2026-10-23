@@ -180,6 +180,9 @@
       "@/components/autoimmune-hepatitis": [
         "../registry/registry/base-nova/autoimmune-hepatitis/autoimmune-hepatitis.tsx"
       ],
+      "@/components/lobar-pneumonia": [
+        "../registry/registry/base-nova/lobar-pneumonia/lobar-pneumonia.tsx"
+      ],
       "@/components/myocardial-infarction": [
         "../registry/registry/base-nova/myocardial-infarction/myocardial-infarction.tsx"
       ],
