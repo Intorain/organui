@@ -91,6 +91,7 @@
     "./ischaemic-stroke": "./registry/base-nova/ischaemic-stroke/ischaemic-stroke.tsx",
     "./kidney-stones": "./registry/base-nova/kidney-stones/kidney-stones.tsx",
     "./lobar-pneumonia": "./registry/base-nova/lobar-pneumonia/lobar-pneumonia.tsx",
+    "./melanoma": "./registry/base-nova/melanoma/melanoma.tsx",
     "./myocardial-infarction": "./registry/base-nova/myocardial-infarction/myocardial-infarction.tsx",
     "./peptic-ulcer-disease": "./registry/base-nova/peptic-ulcer-disease/peptic-ulcer-disease.tsx"
   },

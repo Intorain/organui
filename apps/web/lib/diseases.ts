@@ -39,6 +39,8 @@ export const diseaseData: Record<string, () => Promise<Disease>> = {
     import("@workspace/registry/lobar-pneumonia").then(
       (module) => module.lobarPneumonia
     ),
+  melanoma: () =>
+    import("@workspace/registry/melanoma").then((module) => module.melanoma),
   "myocardial-infarction": () =>
     import("@workspace/registry/myocardial-infarction").then(
       (module) => module.myocardialInfarction

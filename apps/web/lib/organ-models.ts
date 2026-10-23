@@ -111,6 +111,10 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     import("@workspace/registry/lungs").then((module) => module.lungsModel),
   lymph: () =>
     import("@workspace/registry/lymph").then((module) => module.lymphModel),
+  melanoma: () =>
+    import("@workspace/registry/melanoma").then((module) =>
+      local(module.melanomaModel)
+    ),
   muscles: () =>
     import("@workspace/registry/muscles").then((module) => module.musclesModel),
   "myocardial-infarction": () =>
