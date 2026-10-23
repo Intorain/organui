@@ -123,6 +123,10 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     import("@workspace/registry/parathyroid").then((module) =>
       local(module.parathyroidModel)
     ),
+  "peptic-ulcer-disease": () =>
+    import("@workspace/registry/peptic-ulcer-disease").then((module) =>
+      local(module.pepticUlcerDiseaseModel)
+    ),
   pharynx: () =>
     import("@workspace/registry/pharynx").then((module) => module.pharynxModel),
   pineal: () =>

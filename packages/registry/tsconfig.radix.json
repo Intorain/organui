@@ -150,6 +150,9 @@
       "@/components/myocardial-infarction": [
         "./registry/base-nova/myocardial-infarction/myocardial-infarction.tsx"
       ],
+      "@/components/peptic-ulcer-disease": [
+        "./registry/base-nova/peptic-ulcer-disease/peptic-ulcer-disease.tsx"
+      ],
       "@/icons/icon-placeholder": ["../ui/src/components/icon-placeholder.tsx"],
       "@/components/ui/*": ["./vendor/radix-nova/ui/*"],
       "@/components/organ-viewer": [
