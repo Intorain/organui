@@ -23,6 +23,10 @@ export const diseaseData: Record<string, () => Promise<Disease>> = {
     import("@workspace/registry/ischaemic-stroke").then(
       (module) => module.ischaemicStroke
     ),
+  "kidney-stones": () =>
+    import("@workspace/registry/kidney-stones").then(
+      (module) => module.kidneyStones
+    ),
   "lobar-pneumonia": () =>
     import("@workspace/registry/lobar-pneumonia").then(
       (module) => module.lobarPneumonia

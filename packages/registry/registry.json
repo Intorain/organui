@@ -1039,6 +1039,21 @@
       "docs": "Ischaemic stroke docs: https://organui.com/docs/components/ischaemic-stroke. It reuses the brain model, licensed CC BY 4.0 (https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html); keep the viewer's credit visible. Educational, not for diagnosis."
     },
     {
+      "name": "kidney-stones",
+      "type": "registry:component",
+      "title": "Kidney stones",
+      "description": "A stone in the left kidney on the kidneys and ureters, from a silent renal stone through renal colic with hydronephrosis to an infected obstructed kidney, with the urine, CT and bloods at each stage. Model licensed CC BY 4.0.",
+      "registryDependencies": ["@organui/disease-viewer", "@organui/kidneys"],
+      "categories": ["disease", "urinary"],
+      "files": [
+        {
+          "path": "registry/base-nova/kidney-stones/kidney-stones.tsx",
+          "type": "registry:component"
+        }
+      ],
+      "docs": "Kidney stones docs: https://organui.com/docs/components/kidney-stones. It reuses the kidneys model, licensed CC BY 4.0 (https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html); keep the viewer's credit visible. Educational, not for diagnosis."
+    },
+    {
       "name": "lobar-pneumonia",
       "type": "registry:component",
       "title": "Lobar pneumonia",

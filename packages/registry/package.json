@@ -87,6 +87,7 @@
     "./gallstone-disease": "./registry/base-nova/gallstone-disease/gallstone-disease.tsx",
     "./graves-disease": "./registry/base-nova/graves-disease/graves-disease.tsx",
     "./ischaemic-stroke": "./registry/base-nova/ischaemic-stroke/ischaemic-stroke.tsx",
+    "./kidney-stones": "./registry/base-nova/kidney-stones/kidney-stones.tsx",
     "./lobar-pneumonia": "./registry/base-nova/lobar-pneumonia/lobar-pneumonia.tsx",
     "./myocardial-infarction": "./registry/base-nova/myocardial-infarction/myocardial-infarction.tsx",
     "./peptic-ulcer-disease": "./registry/base-nova/peptic-ulcer-disease/peptic-ulcer-disease.tsx"
