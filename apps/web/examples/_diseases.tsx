@@ -49,6 +49,30 @@ export const diseaseExamples = {
       return <Example />
     },
   },
+  "graves-disease-demo": {
+    title: "Graves' disease",
+    file: "graves-disease-demo.tsx",
+    render: async () => {
+      const { Example } = await import("./graves-disease-demo")
+      return <Example />
+    },
+  },
+  "graves-disease-without-panel": {
+    title: "Graves' disease Without Panel",
+    file: "graves-disease-without-panel.tsx",
+    render: async () => {
+      const { Example } = await import("./graves-disease-without-panel")
+      return <Example />
+    },
+  },
+  "graves-disease-controlled": {
+    title: "Graves' disease Controlled",
+    file: "graves-disease-controlled.tsx",
+    render: async () => {
+      const { Example } = await import("./graves-disease-controlled")
+      return <Example />
+    },
+  },
   "ischaemic-stroke-demo": {
     title: "Ischaemic stroke",
     file: "ischaemic-stroke-demo.tsx",

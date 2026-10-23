@@ -55,6 +55,10 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     import("@workspace/registry/gallbladder").then(
       (module) => module.gallbladderModel
     ),
+  "graves-disease": () =>
+    import("@workspace/registry/graves-disease").then((module) =>
+      local(module.gravesDiseaseModel)
+    ),
   hair: () =>
     import("@workspace/registry/hair").then((module) =>
       local(module.hairModel)
