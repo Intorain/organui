@@ -1,6 +1,30 @@
 // Named documentation examples for the diseases, on the public components
 // consumers install. Imports stay explicit so each page loads only its own.
 export const diseaseExamples = {
+  "acute-appendicitis-demo": {
+    title: "Acute appendicitis",
+    file: "acute-appendicitis-demo.tsx",
+    render: async () => {
+      const { Example } = await import("./acute-appendicitis-demo")
+      return <Example />
+    },
+  },
+  "acute-appendicitis-without-panel": {
+    title: "Acute appendicitis Without Panel",
+    file: "acute-appendicitis-without-panel.tsx",
+    render: async () => {
+      const { Example } = await import("./acute-appendicitis-without-panel")
+      return <Example />
+    },
+  },
+  "acute-appendicitis-controlled": {
+    title: "Acute appendicitis Controlled",
+    file: "acute-appendicitis-controlled.tsx",
+    render: async () => {
+      const { Example } = await import("./acute-appendicitis-controlled")
+      return <Example />
+    },
+  },
   "autoimmune-hepatitis-demo": {
     title: "Autoimmune hepatitis",
     file: "autoimmune-hepatitis-demo.tsx",

@@ -177,6 +177,9 @@
       "@/components/disease-model": [
         "../registry/registry/base-nova/disease-viewer/disease-model.ts"
       ],
+      "@/components/acute-appendicitis": [
+        "../registry/registry/base-nova/acute-appendicitis/acute-appendicitis.tsx"
+      ],
       "@/components/autoimmune-hepatitis": [
         "../registry/registry/base-nova/autoimmune-hepatitis/autoimmune-hepatitis.tsx"
       ],

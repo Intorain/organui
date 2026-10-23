@@ -953,6 +953,21 @@
       "docs": "Disease viewer docs: https://organui.com/docs/components/disease-viewer. Educational, not for diagnosis."
     },
     {
+      "name": "acute-appendicitis",
+      "type": "registry:component",
+      "title": "Acute appendicitis",
+      "description": "Acute appendicitis on the appendix and its neighbours, from early obstruction through suppuration to perforation, with the psoas sign, the scores and imaging at each stage. Model licensed CC BY-SA 2.1 JP.",
+      "registryDependencies": ["@organui/disease-viewer", "@organui/appendix"],
+      "categories": ["disease", "digestive"],
+      "files": [
+        {
+          "path": "registry/base-nova/acute-appendicitis/acute-appendicitis.tsx",
+          "type": "registry:component"
+        }
+      ],
+      "docs": "Acute appendicitis docs: https://organui.com/docs/components/acute-appendicitis. It reuses the appendix model, licensed CC BY-SA 2.1 JP (https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en); keep the viewer's credit visible. Educational, not for diagnosis."
+    },
+    {
       "name": "autoimmune-hepatitis",
       "type": "registry:component",
       "title": "Autoimmune hepatitis",
