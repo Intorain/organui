@@ -539,6 +539,21 @@
       "docs": "Liver docs: https://organui.com/docs/components/liver. The model is licensed CC BY 4.0 (https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html); keep the viewer's credit visible."
     },
     {
+      "name": "liver-lobule",
+      "type": "registry:component",
+      "title": "Liver lobule",
+      "description": "A classic liver lobule, from an original OrganUI schematic model: the central vein, hepatocyte plates in their three zones, sinusoids and the portal tracts at its corners. 11 selectable structures and 3 named views. Model licensed CC0 1.0.",
+      "registryDependencies": ["@organui/organ-viewer"],
+      "categories": ["tissue", "digestive"],
+      "files": [
+        {
+          "path": "registry/base-nova/liver-lobule/liver-lobule.tsx",
+          "type": "registry:component"
+        }
+      ],
+      "docs": "Liver lobule docs: https://organui.com/docs/components/liver-lobule. The model is licensed CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/); keep the viewer's credit visible."
+    },
+    {
       "name": "lungs",
       "type": "registry:component",
       "title": "Lungs",
@@ -912,6 +927,49 @@
         }
       ],
       "docs": "Vestibular system docs: https://organui.com/docs/components/vestibular. The model is licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/); keep the viewer's credit visible."
+    },
+    {
+      "name": "disease-viewer",
+      "type": "registry:component",
+      "title": "Disease viewer",
+      "description": "Shows a disease on organ models: the structures it affects or spares at each stage and scale, with a panel for its ICD-10 code, course, findings and key investigations. Every disease component is built on it.",
+      "categories": ["pathology"],
+      "dependencies": [
+        "@base-ui/react@^1.8.0",
+        "class-variance-authority@^0.7.1",
+        "cn@^0.5.0"
+      ],
+      "registryDependencies": ["@organui/organ-viewer", "badge", "button"],
+      "files": [
+        {
+          "path": "registry/base-nova/disease-viewer/disease-viewer.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "registry/base-nova/disease-viewer/disease-model.ts",
+          "type": "registry:component"
+        }
+      ],
+      "docs": "Disease viewer docs: https://organui.com/docs/components/disease-viewer. Educational, not for diagnosis."
+    },
+    {
+      "name": "autoimmune-hepatitis",
+      "type": "registry:component",
+      "title": "Autoimmune hepatitis",
+      "description": "Autoimmune hepatitis at two scales: the whole liver, where it ends in cirrhosis and portal hypertension, and a liver lobule, with the portal infiltrate, interface hepatitis and periportal injury. Affected and spared structures each say what the disease does there. Models licensed CC BY 4.0 (liver) and CC0 1.0 (lobule).",
+      "registryDependencies": [
+        "@organui/disease-viewer",
+        "@organui/liver",
+        "@organui/liver-lobule"
+      ],
+      "categories": ["disease", "digestive"],
+      "files": [
+        {
+          "path": "registry/base-nova/autoimmune-hepatitis/autoimmune-hepatitis.tsx",
+          "type": "registry:component"
+        }
+      ],
+      "docs": "Autoimmune hepatitis docs: https://organui.com/docs/components/autoimmune-hepatitis. It reuses the liver model, licensed CC BY 4.0 (https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html), and the liver lobule model, licensed CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/); keep the viewer's credit visible. An educational model, not for diagnosis."
     },
     {
       "name": "ai-disclaimer",

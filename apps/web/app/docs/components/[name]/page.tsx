@@ -7,6 +7,7 @@ import { DocsPager } from "@/components/docs-pager"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { DiseaseDocs } from "@/components/disease-docs"
 import { OrganApi } from "@/components/organ-api"
 import { OrganExamples } from "@/components/organ-examples"
 import { organModels } from "@/lib/organ-models"
@@ -45,6 +46,8 @@ export default async function Page({ params }: Props) {
   const found = itemFor(name)
   if (!found) notFound()
   const { item, load } = found
+  // Diseases have a page of their own: their course, findings and scales.
+  if (item.disease) return <DiseaseDocs item={item} />
   const model = await load()
   // Models built in this repository load from the site itself (see
   // organ-models.ts); give readers the public address.
@@ -82,7 +85,7 @@ export function ${component}Demo() {
           <Link href="/docs/base-ui" className="underline">
             Base UI or Radix
           </Link>{" "}
-          style. Every organ and the cell share that one{" "}
+          style. Every organ, tissue, disease and the cell share that one{" "}
           <code>organ-viewer.tsx</code>.
         </p>
         <a className="underline" href={item.json}>
