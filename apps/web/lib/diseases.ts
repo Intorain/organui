@@ -19,6 +19,10 @@ export const diseaseData: Record<string, () => Promise<Disease>> = {
     import("@workspace/registry/benign-prostatic-hyperplasia").then(
       (module) => module.benignProstaticHyperplasia
     ),
+  "ectopic-pregnancy": () =>
+    import("@workspace/registry/ectopic-pregnancy").then(
+      (module) => module.ectopicPregnancy
+    ),
   "gallstone-disease": () =>
     import("@workspace/registry/gallstone-disease").then(
       (module) => module.gallstoneDisease

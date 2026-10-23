@@ -141,6 +141,9 @@
       "@/components/benign-prostatic-hyperplasia": [
         "./registry/base-nova/benign-prostatic-hyperplasia/benign-prostatic-hyperplasia.tsx"
       ],
+      "@/components/ectopic-pregnancy": [
+        "./registry/base-nova/ectopic-pregnancy/ectopic-pregnancy.tsx"
+      ],
       "@/components/gallstone-disease": [
         "./registry/base-nova/gallstone-disease/gallstone-disease.tsx"
       ],

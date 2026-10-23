@@ -53,6 +53,10 @@ export const organModels: Record<string, () => Promise<OrganModel>> = {
     ),
   ear: () =>
     import("@workspace/registry/ear").then((module) => module.earModel),
+  "ectopic-pregnancy": () =>
+    import("@workspace/registry/ectopic-pregnancy").then((module) =>
+      local(module.ectopicPregnancyModel)
+    ),
   esophagus: () =>
     import("@workspace/registry/esophagus").then(
       (module) => module.esophagusModel
