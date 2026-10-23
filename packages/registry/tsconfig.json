@@ -167,6 +167,9 @@
       "@/components/peptic-ulcer-disease": [
         "./registry/base-nova/peptic-ulcer-disease/peptic-ulcer-disease.tsx"
       ],
+      "@/components/pituitary-adenoma": [
+        "./registry/base-nova/pituitary-adenoma/pituitary-adenoma.tsx"
+      ],
       // Removed by shadcn add, which writes the project's own icons instead.
       "@/icons/icon-placeholder": ["../ui/src/components/icon-placeholder.tsx"],
       "@/components/ui/*": ["../ui/src/components/*"],

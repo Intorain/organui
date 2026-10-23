@@ -235,6 +235,9 @@
       "@/components/peptic-ulcer-disease": [
         "../../packages/registry/registry/base-nova/peptic-ulcer-disease/peptic-ulcer-disease.tsx"
       ],
+      "@/components/pituitary-adenoma": [
+        "../../packages/registry/registry/base-nova/pituitary-adenoma/pituitary-adenoma.tsx"
+      ],
       "@/icons/icon-placeholder": [
         "../../packages/ui/src/components/icon-placeholder.tsx"
       ],
