@@ -150,6 +150,9 @@
       "@/components/graves-disease": [
         "./registry/base-nova/graves-disease/graves-disease.tsx"
       ],
+      "@/components/hodgkin-lymphoma": [
+        "./registry/base-nova/hodgkin-lymphoma/hodgkin-lymphoma.tsx"
+      ],
       "@/components/ischaemic-stroke": [
         "./registry/base-nova/ischaemic-stroke/ischaemic-stroke.tsx"
       ],

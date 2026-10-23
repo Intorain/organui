@@ -89,6 +89,7 @@
     "./ectopic-pregnancy": "./registry/base-nova/ectopic-pregnancy/ectopic-pregnancy.tsx",
     "./gallstone-disease": "./registry/base-nova/gallstone-disease/gallstone-disease.tsx",
     "./graves-disease": "./registry/base-nova/graves-disease/graves-disease.tsx",
+    "./hodgkin-lymphoma": "./registry/base-nova/hodgkin-lymphoma/hodgkin-lymphoma.tsx",
     "./ischaemic-stroke": "./registry/base-nova/ischaemic-stroke/ischaemic-stroke.tsx",
     "./kidney-stones": "./registry/base-nova/kidney-stones/kidney-stones.tsx",
     "./lobar-pneumonia": "./registry/base-nova/lobar-pneumonia/lobar-pneumonia.tsx",

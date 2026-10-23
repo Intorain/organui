@@ -173,6 +173,30 @@ export const diseaseExamples = {
       return <Example />
     },
   },
+  "hodgkin-lymphoma-demo": {
+    title: "Hodgkin lymphoma",
+    file: "hodgkin-lymphoma-demo.tsx",
+    render: async () => {
+      const { Example } = await import("./hodgkin-lymphoma-demo")
+      return <Example />
+    },
+  },
+  "hodgkin-lymphoma-without-panel": {
+    title: "Hodgkin lymphoma Without Panel",
+    file: "hodgkin-lymphoma-without-panel.tsx",
+    render: async () => {
+      const { Example } = await import("./hodgkin-lymphoma-without-panel")
+      return <Example />
+    },
+  },
+  "hodgkin-lymphoma-controlled": {
+    title: "Hodgkin lymphoma Controlled",
+    file: "hodgkin-lymphoma-controlled.tsx",
+    render: async () => {
+      const { Example } = await import("./hodgkin-lymphoma-controlled")
+      return <Example />
+    },
+  },
   "ischaemic-stroke-demo": {
     title: "Ischaemic stroke",
     file: "ischaemic-stroke-demo.tsx",
